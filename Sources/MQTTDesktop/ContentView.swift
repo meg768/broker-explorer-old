@@ -385,34 +385,38 @@ struct PublishPanel: View {
                 }
 
                 VStack(alignment: .trailing, spacing: 8) {
-                    HStack {
+                    HStack(spacing: 10) {
                         Button {
                             onPublish(topic, payload, retain, qos)
                         } label: {
-                            Label("Publish", systemImage: "paperplane")
+                            PillLabel("Publish")
                         }
+                        .buttonStyle(.plain)
                         .disabled(!canPublish || normalizeTopic(topic).isEmpty)
 
-                        Button(role: .destructive) {
+                        Button {
                             onDeleteTree(topic)
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            PillLabel("Delete", isDanger: true)
                         }
+                        .buttonStyle(.plain)
                         .disabled(!canPublish || normalizeTopic(topic).isEmpty)
                     }
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         Button {
                             qos = (qos + 1) % 3
                         } label: {
-                            Text("QoS \(qos)")
-                                .frame(width: 48)
+                            PillLabel("QoS \(qos)")
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
 
-                        Toggle("Retain", isOn: $retain)
-                            .toggleStyle(.switch)
-                            .fixedSize()
+                        Button {
+                            retain.toggle()
+                        } label: {
+                            PillLabel("Retain", isActive: retain)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -437,8 +441,9 @@ struct PublishPanel: View {
                 Button {
                     formatJSON()
                 } label: {
-                    Label("JSON", systemImage: "curlybraces")
+                    PillLabel(canFormatJSON ? "JSON" : "Text", isActive: canFormatJSON)
                 }
+                .buttonStyle(.plain)
                 .disabled(!canFormatJSON)
             }
 
@@ -477,6 +482,58 @@ struct PublishPanel: View {
         }
 
         payload = pretty
+    }
+}
+
+struct PillLabel: View {
+    let text: String
+    var isActive = true
+    var isDanger = false
+
+    init(_ text: String, isActive: Bool = true, isDanger: Bool = false) {
+        self.text = text
+        self.isActive = isActive
+        self.isDanger = isDanger
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 13, weight: .bold))
+            .lineLimit(1)
+            .padding(.horizontal, 14)
+            .frame(height: 28)
+            .foregroundStyle(foreground)
+            .background(background)
+            .clipShape(Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(border, lineWidth: 1.5)
+            }
+            .contentShape(Capsule())
+    }
+
+    private var foreground: Color {
+        if isDanger {
+            return AppColors.danger
+        }
+
+        return isActive ? AppColors.pillText : .secondary
+    }
+
+    private var background: Color {
+        if isDanger {
+            return AppColors.dangerBackground
+        }
+
+        return isActive ? AppColors.pillBackground : AppColors.neutralBadgeBackground
+    }
+
+    private var border: Color {
+        if isDanger {
+            return AppColors.danger.opacity(0.75)
+        }
+
+        return isActive ? AppColors.primary : AppColors.fieldBorder
     }
 }
 
@@ -573,10 +630,14 @@ enum AppColors {
     static let topicName = Color(nsColor: .secondaryLabelColor)
     static let primary = Color(red: 0.18, green: 0.74, blue: 0.51)
     static let primaryStrong = Color(red: 0.08, green: 0.52, blue: 0.36)
+    static let pillText = Color(red: 0.62, green: 0.93, blue: 0.80)
+    static let pillBackground = Color(red: 0.04, green: 0.35, blue: 0.25).opacity(0.78)
     static let badgeBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
     static let neutralBadgeBackground = Color(nsColor: .quaternaryLabelColor).opacity(0.12)
     static let previewBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
     static let previewText = Color(red: 0.02, green: 0.59, blue: 0.41)
+    static let danger = Color(red: 0.86, green: 0.20, blue: 0.18)
+    static let dangerBackground = Color(red: 0.86, green: 0.20, blue: 0.18).opacity(0.10)
     static let selectionBackground = Color.accentColor.opacity(0.16)
     static let readOnlyBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
     static let readOnlyBorder = Color(red: 0.69, green: 0.93, blue: 0.84)
