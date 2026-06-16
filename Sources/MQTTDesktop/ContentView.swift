@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var store = ExplorerStore()
-    @State private var searchText = SettingsStore.loadSearchText()
+    @State private var searchText = ""
     @State private var settingsOpen = SettingsStore.loadSettingsOpen()
     @State private var publishTopic = ""
     @State private var publishPayload = ""
@@ -100,9 +100,6 @@ struct ContentView: View {
         }
         .onChange(of: settingsOpen) { isOpen in
             SettingsStore.save(settingsOpen: isOpen)
-        }
-        .onChange(of: searchText) { text in
-            SettingsStore.save(searchText: text)
         }
     }
 
