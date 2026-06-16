@@ -10,7 +10,7 @@ struct ContentView: View {
     @State private var publishQoS = 1
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             ConnectionPanel(
                 connection: $store.connection,
                 isConnected: store.isConnected,
@@ -21,18 +21,16 @@ struct ContentView: View {
                 onRefresh: store.refresh
             )
 
-            Divider()
-
             HSplitView {
                 TopicTreePanel(
                     root: store.tree,
                     selectedTopic: store.selectedTopic,
                     expandedTopics: store.expandedTopics,
-                    searchText: searchText,
+                    searchText: $searchText,
                     onSelect: store.selectTopic,
                     onToggle: store.toggleTopic
                 )
-                .frame(minWidth: 320, idealWidth: 460)
+                .frame(minWidth: 520, idealWidth: 700)
 
                 PublishPanel(
                     selectedTopic: store.selectedTopic,
@@ -45,38 +43,14 @@ struct ContentView: View {
                     onPublish: store.publish,
                     onDeleteTree: store.deleteTree
                 )
-                .frame(minWidth: 420, idealWidth: 560)
+                .frame(minWidth: 320, idealWidth: 360)
             }
-
-            Divider()
 
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
-        .frame(minWidth: 980, minHeight: 640)
-        .background(AppColors.windowBackground)
-        .searchable(text: $searchText, prompt: "Filter topics")
-        .toolbar {
-            ToolbarItemGroup {
-                Button {
-                    settingsOpen.toggle()
-                } label: {
-                    Label("Settings", systemImage: "slider.horizontal.3")
-                }
-
-                Button {
-                    store.refresh()
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .disabled(store.isScanning)
-
-                Button {
-                    store.isConnected ? store.disconnect() : store.connect()
-                } label: {
-                    Label(store.isConnected ? "Disconnect" : "Connect", systemImage: store.isConnected ? "bolt.slash" : "bolt.horizontal")
-                }
-            }
-        }
+        .padding(12)
+        .frame(minWidth: 1100, minHeight: 660)
+        .background(AppColors.pageBackground)
         .onAppear {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
         }
@@ -114,52 +88,56 @@ struct ConnectionPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(AppColors.badgeBackground)
-                        .frame(width: 40, height: 40)
-
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(AppColors.primary)
-                }
-
+            HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Broker")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
+                    HStack(spacing: 8) {
+                        FieldLabel("Broker")
+
+                        Button {
+                            settingsOpen.toggle()
+                        } label: {
+                            PillLabel("Settings")
+                        }
+                        .buttonStyle(.plain)
+
+                        ConnectionBadge(text: isConnected ? "Connected" : "Offline", isActive: isConnected)
+
+                        Button {
+                            onRefresh()
+                        } label: {
+                            PillLabel("Refresh", isActive: !isScanning)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isScanning)
+
+                        Button {
+                            isConnected ? onDisconnect() : onConnect()
+                        } label: {
+                            PillLabel(isConnected ? "Disconnect" : "Connect")
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("r", modifiers: [.command])
+                    }
 
                     Text(connection.displayName)
-                        .font(.headline)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(AppColors.heading)
                         .lineLimit(1)
                 }
 
                 Spacer()
 
-                ConnectionBadge(text: isConnected ? "Connected" : "Offline", isActive: isConnected)
-
-                Button {
-                    settingsOpen.toggle()
-                } label: {
-                    Label("Settings", systemImage: "slider.horizontal.3")
+                HStack(spacing: 8) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 30, weight: .bold))
+                    Text("MQTT")
+                        .font(.system(size: 28, weight: .bold))
+                    Text("explorer")
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .italic()
+                        .offset(y: 5)
                 }
-
-                Button {
-                    onRefresh()
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .disabled(isScanning)
-
-                Button {
-                    isConnected ? onDisconnect() : onConnect()
-                } label: {
-                    Label(isConnected ? "Disconnect" : "Connect", systemImage: isConnected ? "bolt.slash" : "bolt.horizontal")
-                }
-                .keyboardShortcut("r", modifiers: [.command])
+                .foregroundStyle(AppColors.primaryStrong)
             }
 
             if settingsOpen {
@@ -188,8 +166,9 @@ struct ConnectionPanel: View {
                 }
             }
         }
-        .padding(16)
+        .padding(18)
         .background(AppColors.panelBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -197,26 +176,39 @@ struct TopicTreePanel: View {
     let root: TopicNode
     let selectedTopic: String
     let expandedTopics: Set<String>
-    let searchText: String
+    @Binding var searchText: String
     let onSelect: (String) -> Void
     let onToggle: (String) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text("Topics")
-                    .font(.headline)
+            HStack(spacing: 10) {
+                FieldLabel("Topics")
+
+                TextField("Filter", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 10)
+                    .frame(width: 220, height: 26)
+                    .background(AppColors.inputBackground)
+                    .clipShape(Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(AppColors.fieldBorder)
+                    }
+
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        PillLabel("Clear", isActive: false)
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 Spacer()
 
-                Text(root.children.isEmpty ? "0" : "\(leafCount(in: root))")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(AppColors.primary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(AppColors.badgeBackground)
-                    .clipShape(Capsule())
+                PillLabel(root.children.isEmpty ? "0 topics" : "\(leafCount(in: root)) topics", isActive: false)
             }
             .padding([.horizontal, .top], 16)
             .padding(.bottom, 10)
@@ -239,6 +231,7 @@ struct TopicTreePanel: View {
             }
         }
         .background(AppColors.panelBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var filteredChildren: [TopicNode] {
@@ -371,67 +364,42 @@ struct PublishPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Topic")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
+            HStack {
+                FieldLabel("Topic")
 
-                    TextField("home/topic", text: $topic)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.body, design: .monospaced))
+                Spacer()
+
+                Button {
+                    onPublish(topic, payload, retain, qos)
+                } label: {
+                    PillLabel("Publish")
                 }
+                .buttonStyle(.plain)
+                .disabled(!canPublish || normalizeTopic(topic).isEmpty)
 
-                VStack(alignment: .trailing, spacing: 8) {
-                    HStack(spacing: 10) {
-                        Button {
-                            onPublish(topic, payload, retain, qos)
-                        } label: {
-                            PillLabel("Publish")
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canPublish || normalizeTopic(topic).isEmpty)
-
-                        Button {
-                            onDeleteTree(topic)
-                        } label: {
-                            PillLabel("Delete", isDanger: true)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canPublish || normalizeTopic(topic).isEmpty)
-                    }
-
-                    HStack(spacing: 10) {
-                        Button {
-                            qos = (qos + 1) % 3
-                        } label: {
-                            PillLabel("QoS \(qos)")
-                        }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            retain.toggle()
-                        } label: {
-                            PillLabel("Retain", isActive: retain)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                Button {
+                    onDeleteTree(topic)
+                } label: {
+                    PillLabel("Delete", isDanger: true)
                 }
+                .buttonStyle(.plain)
+                .disabled(!canPublish || normalizeTopic(topic).isEmpty)
             }
 
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    FieldLabel("Received Time")
-                    ReadOnlyField(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
+            TextField("home/topic", text: $topic)
+                .textFieldStyle(.plain)
+                .font(.system(.body, design: .monospaced))
+                .padding(.horizontal, 12)
+                .frame(height: 42)
+                .background(AppColors.inputBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(AppColors.fieldBorder)
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    FieldLabel("Payload Type")
-                    ReadOnlyField(selectedMessage?.isJSON == true ? "JSON" : "Text")
-                }
-            }
+            FieldLabel("Received Time")
+            ReadOnlyField(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
 
             HStack {
                 FieldLabel("Message")
@@ -445,6 +413,20 @@ struct PublishPanel: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(!canFormatJSON)
+
+                Button {
+                    qos = (qos + 1) % 3
+                } label: {
+                    PillLabel("QoS \(qos)")
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    retain.toggle()
+                } label: {
+                    PillLabel("Retain", isActive: retain)
+                }
+                .buttonStyle(.plain)
             }
 
             TextEditor(text: $payload)
@@ -460,6 +442,7 @@ struct PublishPanel: View {
         }
         .padding(18)
         .background(AppColors.panelBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var canFormatJSON: Bool {
@@ -500,8 +483,8 @@ struct PillLabel: View {
         Text(text)
             .font(.system(size: 13, weight: .bold))
             .lineLimit(1)
-            .padding(.horizontal, 14)
-            .frame(height: 28)
+            .padding(.horizontal, 12)
+            .frame(height: 24)
             .foregroundStyle(foreground)
             .background(background)
             .clipShape(Capsule())
@@ -517,7 +500,7 @@ struct PillLabel: View {
             return AppColors.danger
         }
 
-        return isActive ? AppColors.pillText : .secondary
+        return isActive ? AppColors.primaryStrong : .secondary
     }
 
     private var background: Color {
@@ -525,7 +508,7 @@ struct PillLabel: View {
             return AppColors.dangerBackground
         }
 
-        return isActive ? AppColors.pillBackground : AppColors.neutralBadgeBackground
+        return isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground
     }
 
     private var border: Color {
@@ -565,6 +548,7 @@ struct StatusBar: View {
         .frame(height: 34)
         .padding(.horizontal, 14)
         .background(AppColors.panelBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -579,7 +563,7 @@ struct FieldLabel: View {
         Text(text)
             .font(.caption)
             .fontWeight(.bold)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(AppColors.caption)
             .textCase(.uppercase)
     }
 }
@@ -623,17 +607,19 @@ struct ConnectionBadge: View {
 }
 
 enum AppColors {
-    static let windowBackground = Color(nsColor: .windowBackgroundColor)
-    static let panelBackground = Color(nsColor: .controlBackgroundColor)
-    static let editorBackground = Color(nsColor: .textBackgroundColor)
-    static let fieldBorder = Color(nsColor: .separatorColor)
+    static let pageBackground = Color(red: 0.84, green: 0.91, blue: 0.90)
+    static let windowBackground = pageBackground
+    static let panelBackground = Color.white
+    static let editorBackground = Color.white
+    static let inputBackground = Color.white
+    static let fieldBorder = Color(red: 0.82, green: 0.86, blue: 0.92)
+    static let caption = Color(red: 0.44, green: 0.46, blue: 0.49)
+    static let heading = Color(red: 0.13, green: 0.16, blue: 0.24)
     static let topicName = Color(nsColor: .secondaryLabelColor)
     static let primary = Color(red: 0.18, green: 0.74, blue: 0.51)
     static let primaryStrong = Color(red: 0.08, green: 0.52, blue: 0.36)
-    static let pillText = Color(red: 0.62, green: 0.93, blue: 0.80)
-    static let pillBackground = Color(red: 0.04, green: 0.35, blue: 0.25).opacity(0.78)
     static let badgeBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
-    static let neutralBadgeBackground = Color(nsColor: .quaternaryLabelColor).opacity(0.12)
+    static let neutralBadgeBackground = Color(red: 0.95, green: 0.97, blue: 0.99)
     static let previewBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
     static let previewText = Color(red: 0.02, green: 0.59, blue: 0.41)
     static let danger = Color(red: 0.86, green: 0.20, blue: 0.18)
