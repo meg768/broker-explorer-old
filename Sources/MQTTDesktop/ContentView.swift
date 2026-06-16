@@ -144,7 +144,7 @@ struct ConnectionPanel: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
-                        FieldLabel("Broker")
+                        BrokerLabel()
 
                         Button {
                             settingsOpen.toggle()
@@ -828,6 +828,15 @@ struct FieldLabel: View {
         Text(text)
             .font(.caption)
             .fontWeight(.bold)
+            .foregroundStyle(AppColors.caption)
+            .textCase(.uppercase)
+    }
+}
+
+struct BrokerLabel: View {
+    var body: some View {
+        Text("Broker")
+            .font(.system(size: 20, weight: .bold))
             .foregroundStyle(AppColors.caption)
             .textCase(.uppercase)
     }
