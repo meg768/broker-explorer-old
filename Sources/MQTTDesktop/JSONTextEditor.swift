@@ -11,7 +11,7 @@ struct JSONTextEditor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
+        scrollView.hasHorizontalScroller = true
         scrollView.drawsBackground = false
 
         let textView = NSTextView()
@@ -25,13 +25,13 @@ struct JSONTextEditor: NSViewRepresentable {
         textView.textColor = .labelColor
         textView.backgroundColor = .clear
         textView.textContainerInset = NSSize(width: 10, height: 10)
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: scrollView.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = false
+        textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.minSize = NSSize(width: 0, height: scrollView.contentSize.height)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
+        textView.isHorizontallyResizable = true
+        textView.autoresizingMask = [.width, .height]
 
         scrollView.documentView = textView
         context.coordinator.textView = textView
