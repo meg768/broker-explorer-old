@@ -423,10 +423,7 @@ struct PublishPanel: View {
                 .buttonStyle(.plain)
             }
 
-            TextEditor(text: $payload)
-                .font(.system(.body, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .padding(10)
+            JSONTextEditor(text: $payload)
                 .background(AppColors.editorBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay {
