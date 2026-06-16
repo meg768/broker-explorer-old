@@ -21,7 +21,8 @@ struct ContentView: View {
                 settingsOpen: $settingsOpen,
                 onConnect: store.connect,
                 onDisconnect: store.disconnect,
-                onRefresh: store.refresh
+                onRefresh: store.refresh,
+                onCopyLink: store.copyConnectionLink
             )
 
             ExplorerSplitView(
@@ -144,6 +145,7 @@ struct ConnectionPanel: View {
     let onConnect: () -> Void
     let onDisconnect: () -> Void
     let onRefresh: () -> Void
+    let onCopyLink: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -151,6 +153,13 @@ struct ConnectionPanel: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
                         FieldLabel("Broker")
+
+                        Button {
+                            settingsOpen.toggle()
+                        } label: {
+                            PillLabel("Settings")
+                        }
+                        .buttonStyle(.plain)
 
                         if isConnected {
                             Button {
@@ -169,6 +178,13 @@ struct ConnectionPanel: View {
                             }
                             .buttonStyle(.plain)
                         }
+
+                        Button {
+                            onCopyLink()
+                        } label: {
+                            PillLabel("Link")
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     Text(connection.displayName)
