@@ -51,6 +51,29 @@ struct ContentView: View {
         .padding(12)
         .frame(minWidth: 1100, minHeight: 660)
         .background(AppColors.pageBackground)
+        .searchable(text: $searchText, placement: .toolbar, prompt: "Filter topics")
+        .toolbar {
+            ToolbarItemGroup {
+                Button {
+                    settingsOpen.toggle()
+                } label: {
+                    Label("Settings", systemImage: "slider.horizontal.3")
+                }
+
+                Button {
+                    store.refresh()
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
+                .disabled(store.isScanning)
+
+                Button {
+                    store.isConnected ? store.disconnect() : store.connect()
+                } label: {
+                    Label(store.isConnected ? "Disconnect" : "Connect", systemImage: store.isConnected ? "bolt.slash" : "bolt.horizontal")
+                }
+            }
+        }
         .onAppear {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
         }
