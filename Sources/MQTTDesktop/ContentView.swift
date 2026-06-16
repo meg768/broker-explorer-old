@@ -177,15 +177,19 @@ struct ConnectionPanel: View {
                     GridRow {
                         TextField("mqtt://broker.example.com", text: $connection.url)
                             .textFieldStyle(.roundedBorder)
+                            .foregroundStyle(AppColors.heading)
 
                         TextField("", text: $connection.username)
                             .textFieldStyle(.roundedBorder)
+                            .foregroundStyle(AppColors.heading)
 
                         SecureField("", text: $connection.password)
                             .textFieldStyle(.roundedBorder)
+                            .foregroundStyle(AppColors.heading)
 
                         TextField("1883", text: $connection.port)
                             .textFieldStyle(.roundedBorder)
+                            .foregroundStyle(AppColors.heading)
                             .frame(width: 84)
                     }
                 }
@@ -391,6 +395,7 @@ struct PublishPanel: View {
             TextField("home/topic", text: $topic)
                 .textFieldStyle(.plain)
                 .font(.system(.body, design: .monospaced))
+                .foregroundStyle(AppColors.heading)
                 .padding(.horizontal, 12)
                 .frame(height: 42)
                 .background(AppColors.inputBackground)
@@ -585,11 +590,12 @@ struct FilterField: View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColors.badgeText)
 
             TextField("Filter topics", text: $text)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AppColors.heading)
 
             if !text.isEmpty {
                 Button {
@@ -597,7 +603,7 @@ struct FilterField: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.badgeText)
                 }
                 .buttonStyle(.plain)
             }
@@ -626,15 +632,15 @@ struct StatusBar: View {
                     .foregroundStyle(status.tint)
             } else {
                 Image(systemName: "circle")
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(AppColors.treeMuted)
                 Text("Ready")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.badgeText)
             }
 
             Spacer()
 
             Text(topicCount == 1 ? "1 topic" : "\(topicCount) topics")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColors.badgeText)
         }
         .font(.caption)
         .fontWeight(.semibold)
@@ -671,6 +677,7 @@ struct ReadOnlyField: View {
     var body: some View {
         Text(text)
             .lineLimit(1)
+            .foregroundStyle(AppColors.heading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
             .frame(height: 32)
@@ -693,7 +700,7 @@ struct ConnectionBadge: View {
             .fontWeight(.bold)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .foregroundStyle(isActive ? AppColors.primaryStrong : .secondary)
+            .foregroundStyle(isActive ? AppColors.primaryStrong : AppColors.badgeText)
             .background(isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground)
             .clipShape(Capsule())
     }
