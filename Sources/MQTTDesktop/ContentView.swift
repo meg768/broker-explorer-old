@@ -569,12 +569,13 @@ struct PublishPanel: View {
                 Spacer()
 
                 Button {
-                    formatJSON()
+                    if canFormatJSON {
+                        formatJSON()
+                    }
                 } label: {
-                    IconPillLabel(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft", isActive: canFormatJSON)
+                    IconPillLabel(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft")
                 }
                 .buttonStyle(.plain)
-                .disabled(!canFormatJSON)
 
                 Button {
                     qos = (qos + 1) % 3
