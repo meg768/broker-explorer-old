@@ -125,8 +125,6 @@ struct ConnectionPanel: View {
                     HStack(spacing: 8) {
                         FieldLabel("Broker")
 
-                        ConnectionBadge(text: isConnected ? "Connected" : "Offline", isActive: isConnected)
-
                         Button {
                             isConnected ? onDisconnect() : onConnect()
                         } label: {
