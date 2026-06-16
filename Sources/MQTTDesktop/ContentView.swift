@@ -172,8 +172,8 @@ struct ConnectionPanel: View {
                 Spacer()
 
                 HStack(spacing: 8) {
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 30, weight: .bold))
+                    AppLogoIcon()
+                        .frame(width: 34, height: 34)
                     Text("MQTT")
                         .font(.system(size: 28, weight: .bold))
                     Text("Desktop")
@@ -219,6 +219,18 @@ struct ConnectionPanel: View {
         .padding(18)
         .background(AppColors.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct AppLogoIcon: View {
+    private var icon: NSImage {
+        NSImage(named: "MQTTDesktopIcon") ?? NSApplication.shared.applicationIconImage
+    }
+
+    var body: some View {
+        Image(nsImage: icon)
+            .resizable()
+            .scaledToFit()
     }
 }
 
