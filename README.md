@@ -13,6 +13,15 @@ swift build
 swift run MQTTDesktop
 ```
 
+## Build a Finder App
+
+```sh
+Scripts/build-app.sh
+open dist
+```
+
+Then double-click `MQTT Desktop.app`.
+
 ## First Milestone
 
 - Manage broker connection profiles
@@ -20,4 +29,3 @@ swift run MQTTDesktop
 - Render incoming topics as a browsable tree
 - Inspect latest payloads
 - Publish messages to selected topics
-
