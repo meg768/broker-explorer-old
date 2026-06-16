@@ -6,10 +6,13 @@ final class ExplorerStore: ObservableObject {
     @Published var connection = BrokerConnection()
     @Published var isConnected = false
     @Published var isScanning = false
-    @Published var messages: [MQTTMessage] = MQTTMessage.sampleData
-    @Published var selectedTopic = "home/livingroom/temperature"
-    @Published var expandedTopics: Set<String> = ["home", "home/livingroom", "home/office", "system"]
+    @Published var messages: [MQTTMessage] = []
+    @Published var selectedTopic = ""
+    @Published var expandedTopics: Set<String> = []
     @Published var status = ExplorerStatus.idle
+
+    private let mqttService = MQTTService()
+    private var scanCompletionTask: Task<Void, Never>?
 
     var tree: TopicNode {
         TopicTreeBuilder.build(messages: messages)
@@ -24,37 +27,55 @@ final class ExplorerStore: ObservableObject {
     }
 
     func connect() {
-        isConnected = true
+        scanCompletionTask?.cancel()
+        isConnected = false
         isScanning = true
         status = .pending("Reading broker...")
+        messages = []
+        selectedTopic = ""
+        expandedTopics = []
 
         Task {
-            try? await Task.sleep(for: .milliseconds(900))
-            isScanning = false
-            status = .success("Connected to \(connection.displayName). Read \(topicCount) retained topics.")
+            do {
+                let brokerName = connection.displayName
+                try await mqttService.connect(
+                    connection: connection,
+                    onMessage: { [weak self] message in
+                        await self?.receive(message)
+                    },
+                    onClose: { [weak self] error in
+                        await self?.connectionClosed(error: error)
+                    }
+                )
+                isConnected = true
+                status = .pending("Reading retained topics from \(brokerName)...")
+                scheduleScanCompletion()
+            } catch {
+                isConnected = false
+                isScanning = false
+                status = .error(error.localizedDescription)
+            }
         }
     }
 
     func disconnect() {
-        isConnected = false
-        isScanning = false
-        status = .idle
+        scanCompletionTask?.cancel()
+
+        Task {
+            do {
+                try await mqttService.disconnect()
+            } catch {
+                status = .error(error.localizedDescription)
+            }
+
+            isConnected = false
+            isScanning = false
+            status = .idle
+        }
     }
 
     func refresh() {
-        guard isConnected else {
-            connect()
-            return
-        }
-
-        isScanning = true
-        status = .pending("Reading broker...")
-
-        Task {
-            try? await Task.sleep(for: .milliseconds(700))
-            isScanning = false
-            status = .success("Refresh complete. Read \(topicCount) retained topics.")
-        }
+        connect()
     }
 
     func selectTopic(_ topic: String) {
@@ -77,29 +98,13 @@ final class ExplorerStore: ObservableObject {
             return
         }
 
-        let message = MQTTMessage(
-            topic: normalized,
-            payload: payload,
-            qos: min(max(qos, 0), 2),
-            retain: retain,
-            receivedAt: Date()
-        )
-
-        if payload.isEmpty && retain {
-            messages.removeAll { $0.topic == normalized }
-            status = .success("Deleted value for \(normalized).")
-            if selectedTopic == normalized {
-                selectedTopic = messages.first?.topic ?? ""
+        Task {
+            do {
+                try await mqttService.publish(topic: normalized, payload: payload, retain: retain, qos: qos)
+                publishLocally(topic: normalized, payload: payload, retain: retain, qos: qos)
+            } catch {
+                status = .error(error.localizedDescription)
             }
-        } else if let index = messages.firstIndex(where: { $0.topic == normalized }) {
-            messages[index] = message
-            status = .success("Published \(normalized) (\(retain ? "retained" : "live"), QoS \(message.qos)).")
-            selectTopic(normalized)
-        } else {
-            messages.append(message)
-            messages.sort { $0.topic.localizedStandardCompare($1.topic) == .orderedAscending }
-            status = .success("Published \(normalized) (\(retain ? "retained" : "live"), QoS \(message.qos)).")
-            selectTopic(normalized)
         }
     }
 
@@ -111,10 +116,107 @@ final class ExplorerStore: ObservableObject {
         }
 
         let prefix = "\(normalized)/"
-        let deletedCount = messages.filter { $0.topic == normalized || $0.topic.hasPrefix(prefix) }.count
-        messages.removeAll { $0.topic == normalized || $0.topic.hasPrefix(prefix) }
-        selectedTopic = messages.first?.topic ?? ""
-        status = .success("Deleted \(deletedCount) retained \(deletedCount == 1 ? "topic" : "topics") under \(normalized).")
+        let topics = messages
+            .map(\.topic)
+            .filter { $0 == normalized || $0.hasPrefix(prefix) }
+
+        guard !topics.isEmpty else {
+            status = .success("No retained topics under \(normalized).")
+            return
+        }
+
+        Task {
+            do {
+                for topic in topics {
+                    try await mqttService.publish(topic: topic, payload: "", retain: true, qos: 1)
+                }
+
+                messages.removeAll { topics.contains($0.topic) }
+                selectedTopic = messages.first?.topic ?? ""
+                status = .success("Deleted \(topics.count) retained \(topics.count == 1 ? "topic" : "topics") under \(normalized).")
+            } catch {
+                status = .error(error.localizedDescription)
+            }
+        }
+    }
+
+    private func receive(_ message: MQTTMessage) {
+        scanCompletionTask?.cancel()
+
+        if message.payload.isEmpty {
+            messages.removeAll { $0.topic == message.topic }
+            if selectedTopic == message.topic {
+                selectedTopic = messages.first?.topic ?? ""
+            }
+        } else if let index = messages.firstIndex(where: { $0.topic == message.topic }) {
+            messages[index] = message
+        } else {
+            messages.append(message)
+            messages.sort { $0.topic.localizedStandardCompare($1.topic) == .orderedAscending }
+        }
+
+        if selectedTopic.isEmpty, let firstTopic = messages.first?.topic {
+            selectTopic(firstTopic)
+        }
+
+        expandedTopics.formUnion(ancestorTopics(for: message.topic))
+        scheduleScanCompletion()
+    }
+
+    private func publishLocally(topic: String, payload: String, retain: Bool, qos: Int) {
+        let message = MQTTMessage(
+            topic: topic,
+            payload: payload,
+            qos: min(max(qos, 0), 2),
+            retain: retain,
+            receivedAt: Date()
+        )
+
+        if payload.isEmpty && retain {
+            messages.removeAll { $0.topic == topic }
+            status = .success("Deleted value for \(topic).")
+            if selectedTopic == topic {
+                selectedTopic = messages.first?.topic ?? ""
+            }
+            return
+        }
+
+        if let index = messages.firstIndex(where: { $0.topic == topic }) {
+            messages[index] = message
+        } else {
+            messages.append(message)
+            messages.sort { $0.topic.localizedStandardCompare($1.topic) == .orderedAscending }
+        }
+
+        status = .success("Published \(topic) (\(retain ? "retained" : "live"), QoS \(message.qos)).")
+        selectTopic(topic)
+    }
+
+    private func scheduleScanCompletion() {
+        guard isScanning else {
+            return
+        }
+
+        scanCompletionTask?.cancel()
+        scanCompletionTask = Task {
+            try? await Task.sleep(for: .milliseconds(1_800))
+            guard !Task.isCancelled else {
+                return
+            }
+
+            isScanning = false
+            status = .success("Connected to \(connection.displayName). Read \(topicCount) retained \(topicCount == 1 ? "topic" : "topics").")
+        }
+    }
+
+    private func connectionClosed(error: String?) {
+        guard isConnected else {
+            return
+        }
+
+        isConnected = false
+        isScanning = false
+        status = .error(error ?? "Broker connection closed.")
     }
 }
 
