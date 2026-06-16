@@ -14,7 +14,7 @@ enum SettingsStore {
         BrokerConnection(
             url: UserDefaults.standard.string(forKey: urlKey) ?? "mqtt://localhost",
             username: UserDefaults.standard.string(forKey: usernameKey) ?? "",
-            password: Keychain.password(service: keychainService, account: keychainAccount) ?? "",
+            password: "",
             port: UserDefaults.standard.string(forKey: portKey) ?? "1883"
         )
     }
@@ -23,12 +23,18 @@ enum SettingsStore {
         UserDefaults.standard.set(connection.url, forKey: urlKey)
         UserDefaults.standard.set(connection.username, forKey: usernameKey)
         UserDefaults.standard.set(connection.port, forKey: portKey)
+    }
 
-        if connection.password.isEmpty {
-            Keychain.deletePassword(service: keychainService, account: keychainAccount)
-        } else {
-            Keychain.setPassword(connection.password, service: keychainService, account: keychainAccount)
+    static func password() -> String? {
+        Keychain.password(service: keychainService, account: keychainAccount)
+    }
+
+    static func savePassword(_ password: String) {
+        guard !password.isEmpty else {
+            return
         }
+
+        Keychain.setPassword(password, service: keychainService, account: keychainAccount)
     }
 
     static func loadSettingsOpen() -> Bool {
@@ -98,4 +104,3 @@ private enum Keychain {
         ]
     }
 }
-

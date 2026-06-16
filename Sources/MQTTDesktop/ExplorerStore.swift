@@ -37,9 +37,17 @@ final class ExplorerStore: ObservableObject {
 
         Task {
             do {
-                let brokerName = connection.displayName
+                SettingsStore.save(connection: connection)
+                var connectionForConnect = connection
+                if connectionForConnect.password.isEmpty {
+                    connectionForConnect.password = SettingsStore.password() ?? ""
+                } else {
+                    SettingsStore.savePassword(connectionForConnect.password)
+                }
+
+                let brokerName = connectionForConnect.displayName
                 try await mqttService.connect(
-                    connection: connection,
+                    connection: connectionForConnect,
                     onMessage: { [weak self] message in
                         await self?.receive(message)
                     },
