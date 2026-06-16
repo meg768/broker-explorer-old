@@ -92,7 +92,8 @@ struct JSONTextEditor: NSViewRepresentable {
             highlight(pattern: #""(?:\\.|[^"\\])*"\s*:"#, color: NSColor.systemRed, trimTrailingColon: true, in: storage, text: string)
             highlight(pattern: #"(?<![\w.])-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b"#, color: NSColor.systemOrange, in: storage, text: string)
             highlight(pattern: #"\b(?:true|false|null)\b"#, color: NSColor.systemPurple, in: storage, text: string)
-            highlight(pattern: #"[{}\[\],:]"#, color: NSColor.secondaryLabelColor, in: storage, text: string)
+            let punctuationColor = NSColor(calibratedRed: 0.40, green: 0.43, blue: 0.48, alpha: 1)
+            highlight(pattern: #"[{}\[\],:]"#, color: punctuationColor, in: storage, text: string)
 
             storage.endEditing()
             textView.selectedRanges = selectedRanges
