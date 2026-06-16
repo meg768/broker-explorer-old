@@ -117,6 +117,14 @@ struct ConnectionPanel: View {
                         FieldLabel("Broker")
 
                         ConnectionBadge(text: isConnected ? "Connected" : "Offline", isActive: isConnected)
+
+                        Button {
+                            isConnected ? onDisconnect() : onConnect()
+                        } label: {
+                            PillLabel(isConnected ? "Disconnect" : "Connect")
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("r", modifiers: [.command])
                     }
 
                     Text(connection.displayName)
