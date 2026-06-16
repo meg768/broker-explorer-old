@@ -85,7 +85,9 @@ struct ContentView: View {
             hydratePublishPanel(from: message, topic: store.selectedTopic)
         }
         .onChange(of: store.isConnected) { isConnected in
-            if !isConnected, store.topicCount == 0, store.selectedTopic.isEmpty {
+            if isConnected {
+                settingsOpen = false
+            } else if store.topicCount == 0, store.selectedTopic.isEmpty {
                 clearPublishPanel()
             }
         }
