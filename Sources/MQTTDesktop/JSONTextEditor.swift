@@ -88,6 +88,12 @@ struct JSONTextEditor: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ], range: fullRange)
 
+            guard isJSONObject(string) else {
+                storage.endEditing()
+                textView.selectedRanges = selectedRanges
+                return
+            }
+
             highlight(pattern: #""(?:\\.|[^"\\])*""#, color: NSColor.systemGreen, in: storage, text: string)
             highlight(pattern: #""(?:\\.|[^"\\])*"\s*:"#, color: NSColor.systemRed, trimTrailingColon: true, in: storage, text: string)
             highlight(pattern: #"(?<![\w.])-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b"#, color: NSColor.systemOrange, in: storage, text: string)
@@ -97,6 +103,17 @@ struct JSONTextEditor: NSViewRepresentable {
 
             storage.endEditing()
             textView.selectedRanges = selectedRanges
+        }
+
+        private func isJSONObject(_ text: String) -> Bool {
+            guard
+                let data = text.data(using: .utf8),
+                let object = try? JSONSerialization.jsonObject(with: data)
+            else {
+                return false
+            }
+
+            return JSONSerialization.isValidJSONObject(object)
         }
 
         private func highlight(
