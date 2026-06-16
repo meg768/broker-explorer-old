@@ -40,7 +40,6 @@ struct ContentView: View {
                     payload: $publishPayload,
                     retain: $publishRetain,
                     qos: $publishQoS,
-                    canPublish: store.isConnected,
                     onPublish: store.publish,
                     onDeleteTree: store.deleteTree
                 )
@@ -286,9 +285,8 @@ struct TopicNodeRow: View {
         VStack(alignment: .leading, spacing: 1) {
             HStack(spacing: 6) {
                 Button {
-                    if node.children.isEmpty {
-                        onSelect(node.path)
-                    } else {
+                    onSelect(node.path)
+                    if !node.children.isEmpty {
                         onToggle(node.path)
                     }
                 } label: {
@@ -364,7 +362,6 @@ struct PublishPanel: View {
     @Binding var payload: String
     @Binding var retain: Bool
     @Binding var qos: Int
-    let canPublish: Bool
     let onPublish: (String, String, Bool, Int) -> Void
     let onDeleteTree: (String) -> Void
 
@@ -381,7 +378,7 @@ struct PublishPanel: View {
                     IconPillLabel("Publish", systemImage: "paperplane")
                 }
                 .buttonStyle(.plain)
-                .disabled(!canPublish || normalizeTopic(topic).isEmpty)
+                .disabled(normalizeTopic(topic).isEmpty)
 
                 Button {
                     onDeleteTree(topic)
@@ -389,7 +386,7 @@ struct PublishPanel: View {
                     IconPillLabel("Delete", systemImage: "trash")
                 }
                 .buttonStyle(.plain)
-                .disabled(!canPublish || normalizeTopic(topic).isEmpty)
+                .disabled(normalizeTopic(topic).isEmpty)
             }
 
             TextField("home/topic", text: $topic)
