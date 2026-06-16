@@ -93,17 +93,11 @@ struct TopicNode: Identifiable, Equatable {
     var message: MQTTMessage?
 
     var childCountLabel: String? {
-        let count = descendantMessageCount
-        guard count > 0 else {
+        guard !children.isEmpty else {
             return nil
         }
 
-        return count == 1 ? "1 topic" : "\(count) topics"
-    }
-
-    var descendantMessageCount: Int {
-        let ownCount = message == nil ? 0 : 1
-        return ownCount + children.reduce(0) { $0 + $1.descendantMessageCount }
+        return children.count == 1 ? "1 topic" : "\(children.count) topics"
     }
 }
 
