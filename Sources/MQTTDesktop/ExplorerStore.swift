@@ -61,6 +61,10 @@ final class ExplorerStore: ObservableObject {
 
     func disconnect() {
         scanCompletionTask?.cancel()
+        isConnected = false
+        isScanning = false
+        clearSession()
+        status = .idle
 
         Task {
             do {
@@ -68,10 +72,6 @@ final class ExplorerStore: ObservableObject {
             } catch {
                 status = .error(error.localizedDescription)
             }
-
-            isConnected = false
-            isScanning = false
-            status = .idle
         }
     }
 
@@ -89,6 +89,12 @@ final class ExplorerStore: ObservableObject {
         } else {
             expandedTopics.insert(topic)
         }
+    }
+
+    private func clearSession() {
+        messages = []
+        selectedTopic = ""
+        expandedTopics = []
     }
 
     func publish(topic: String, payload: String, retain: Bool, qos: Int) {

@@ -84,6 +84,11 @@ struct ContentView: View {
         .onChange(of: store.selectedMessage) { message in
             hydratePublishPanel(from: message, topic: store.selectedTopic)
         }
+        .onChange(of: store.isConnected) { isConnected in
+            if !isConnected, store.topicCount == 0, store.selectedTopic.isEmpty {
+                clearPublishPanel()
+            }
+        }
         .onChange(of: store.connection) { connection in
             SettingsStore.save(connection: connection)
         }
@@ -107,6 +112,13 @@ struct ContentView: View {
             publishRetain = true
             publishQoS = 1
         }
+    }
+
+    private func clearPublishPanel() {
+        publishTopic = ""
+        publishPayload = ""
+        publishRetain = true
+        publishQoS = 1
     }
 
     private func autoConnectIfPossible() {
