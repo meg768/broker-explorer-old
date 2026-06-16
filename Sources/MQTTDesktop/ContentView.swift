@@ -825,7 +825,7 @@ struct FieldLabel: View {
 struct BrokerLabel: View {
     var body: some View {
         Text("Broker")
-            .font(.system(size: 16, weight: .bold))
+            .font(.system(size: 14, weight: .bold))
             .foregroundStyle(AppColors.caption)
             .textCase(.uppercase)
     }
