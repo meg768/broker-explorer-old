@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import AppKit
 
 @MainActor
 final class ExplorerStore: ObservableObject {
@@ -78,18 +77,6 @@ final class ExplorerStore: ObservableObject {
 
     func refresh() {
         connect()
-    }
-
-    func copyConnectionLink() {
-        let link = connection.connectionLink
-        guard !link.isEmpty else {
-            status = .error("Broker URL is required.")
-            return
-        }
-
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(link, forType: .string)
-        status = .success("Connection link copied.")
     }
 
     func selectTopic(_ topic: String) {

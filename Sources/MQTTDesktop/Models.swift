@@ -39,26 +39,6 @@ struct BrokerConnection: Equatable {
             && !password.isEmpty
             && !port.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-
-    var connectionLink: String {
-        guard var components = URLComponents(string: "https://mqtt-explorer.egelberg.se/") else {
-            return ""
-        }
-
-        let normalizedBrokerURL = normalizedURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !normalizedBrokerURL.isEmpty else {
-            return ""
-        }
-
-        components.queryItems = [
-            URLQueryItem(name: "url", value: normalizedBrokerURL),
-            username.isEmpty ? nil : URLQueryItem(name: "username", value: username),
-            password.isEmpty ? nil : URLQueryItem(name: "password", value: password),
-            port.isEmpty ? nil : URLQueryItem(name: "port", value: port)
-        ].compactMap { $0 }
-
-        return components.string ?? ""
-    }
 }
 
 struct MQTTMessage: Identifiable, Equatable {

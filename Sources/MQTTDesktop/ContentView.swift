@@ -16,13 +16,7 @@ struct ContentView: View {
         VStack(spacing: 12) {
             ConnectionPanel(
                 connection: $store.connection,
-                isConnected: store.isConnected,
-                isScanning: store.isScanning,
-                settingsOpen: $settingsOpen,
-                onConnect: store.connect,
-                onDisconnect: store.disconnect,
-                onRefresh: store.refresh,
-                onCopyLink: store.copyConnectionLink
+                settingsOpen: $settingsOpen
             )
 
             ExplorerSplitView(
@@ -139,13 +133,7 @@ struct ContentView: View {
 
 struct ConnectionPanel: View {
     @Binding var connection: BrokerConnection
-    let isConnected: Bool
-    let isScanning: Bool
     @Binding var settingsOpen: Bool
-    let onConnect: () -> Void
-    let onDisconnect: () -> Void
-    let onRefresh: () -> Void
-    let onCopyLink: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -158,31 +146,6 @@ struct ConnectionPanel: View {
                             settingsOpen.toggle()
                         } label: {
                             PillLabel("Settings")
-                        }
-                        .buttonStyle(.plain)
-
-                        if isConnected {
-                            Button {
-                                onDisconnect()
-                            } label: {
-                                PillLabel("Disconnect")
-                            }
-                            .buttonStyle(.plain)
-                        } else if isScanning {
-                            PillLabel("Connecting", isActive: false)
-                        } else {
-                            Button {
-                                onConnect()
-                            } label: {
-                                PillLabel("Connect")
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        Button {
-                            onCopyLink()
-                        } label: {
-                            PillLabel("Link")
                         }
                         .buttonStyle(.plain)
                     }
