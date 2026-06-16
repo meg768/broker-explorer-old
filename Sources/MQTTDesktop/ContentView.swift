@@ -92,6 +92,7 @@ struct ContentView: View {
             if isConnected {
                 settingsOpen = false
             } else if store.topicCount == 0, store.selectedTopic.isEmpty {
+                settingsOpen = true
                 clearPublishPanel()
             }
         }
