@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class ExplorerStore: ObservableObject {
-    @Published var connection = BrokerConnection()
+    @Published var connection = SettingsStore.loadConnection()
     @Published var isConnected = false
     @Published var isScanning = false
     @Published var messages: [MQTTMessage] = []

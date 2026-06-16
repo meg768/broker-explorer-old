@@ -2,8 +2,8 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var store = ExplorerStore()
-    @State private var searchText = ""
-    @State private var settingsOpen = true
+    @State private var searchText = SettingsStore.loadSearchText()
+    @State private var settingsOpen = SettingsStore.loadSettingsOpen()
     @State private var publishTopic = ""
     @State private var publishPayload = ""
     @State private var publishRetain = true
@@ -82,6 +82,15 @@ struct ContentView: View {
         }
         .onChange(of: store.selectedMessage) { message in
             hydratePublishPanel(from: message, topic: store.selectedTopic)
+        }
+        .onChange(of: store.connection) { connection in
+            SettingsStore.save(connection: connection)
+        }
+        .onChange(of: settingsOpen) { isOpen in
+            SettingsStore.save(settingsOpen: isOpen)
+        }
+        .onChange(of: searchText) { text in
+            SettingsStore.save(searchText: text)
         }
     }
 
