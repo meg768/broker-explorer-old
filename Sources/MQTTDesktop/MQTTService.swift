@@ -56,7 +56,8 @@ actor MQTTService {
         }
 
         _ = try await client.subscribe(to: [
-            MQTTSubscribeInfo(topicFilter: "#", qos: .atLeastOnce)
+            MQTTSubscribeInfo(topicFilter: "#", qos: .atLeastOnce),
+            MQTTSubscribeInfo(topicFilter: "$SYS/#", qos: .atLeastOnce)
         ])
     }
 

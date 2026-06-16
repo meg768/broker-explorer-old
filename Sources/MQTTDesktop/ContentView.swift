@@ -411,8 +411,7 @@ struct TopicTreePanel: View {
     }
 
     private func leafCount(in node: TopicNode) -> Int {
-        let ownCount = node.message == nil ? 0 : 1
-        return ownCount + node.children.reduce(0) { $0 + leafCount(in: $1) }
+        node.descendantMessageCount
     }
 }
 
