@@ -158,10 +158,8 @@ struct ConnectionPanel: View {
                         .font(.system(size: 30, weight: .bold))
                     Text("MQTT")
                         .font(.system(size: 28, weight: .bold))
-                    Text("explorer")
-                        .font(.system(size: 17, weight: .semibold, design: .serif))
-                        .italic()
-                        .offset(y: 5)
+                    Text("Desktop")
+                        .font(.system(size: 24, weight: .bold))
                 }
                 .foregroundStyle(AppColors.primaryStrong)
             }
