@@ -35,7 +35,7 @@ struct JSONTextEditor: NSViewRepresentable {
 
         scrollView.documentView = textView
         context.coordinator.textView = textView
-        context.coordinator.applyHighlighting()
+        context.coordinator.applyHighlighting(preserveSelection: false)
 
         return scrollView
     }
@@ -50,7 +50,7 @@ struct JSONTextEditor: NSViewRepresentable {
             context.coordinator.isUpdating = true
             textView.string = text
             context.coordinator.isUpdating = false
-            context.coordinator.applyHighlighting()
+            context.coordinator.applyHighlighting(preserveSelection: false)
         }
     }
 
@@ -69,15 +69,15 @@ struct JSONTextEditor: NSViewRepresentable {
             }
 
             parentText.wrappedValue = textView.string
-            applyHighlighting()
+            applyHighlighting(preserveSelection: true)
         }
 
-        func applyHighlighting() {
+        func applyHighlighting(preserveSelection: Bool) {
             guard let textView, let storage = textView.textStorage else {
                 return
             }
 
-            let selectedRanges = textView.selectedRanges
+            let selectedRanges = preserveSelection ? textView.selectedRanges : [NSValue(range: NSRange(location: 0, length: 0))]
             let string = textView.string
             let fullRange = NSRange(location: 0, length: (string as NSString).length)
             let baseFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
