@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var publishRetain = true
     @State private var publishQoS = 1
     @State private var didAutoConnect = false
+    @State private var topicPanelWidth: CGFloat?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -22,29 +23,22 @@ struct ContentView: View {
                 onRefresh: store.refresh
             )
 
-            HSplitView {
-                TopicTreePanel(
-                    root: store.tree,
-                    selectedTopic: store.selectedTopic,
-                    expandedTopics: store.expandedTopics,
-                    searchText: $searchText,
-                    onSelect: store.selectTopic,
-                    onToggle: store.toggleTopic
-                )
-                .frame(minWidth: 520, idealWidth: 700)
-
-                PublishPanel(
-                    selectedTopic: store.selectedTopic,
-                    selectedMessage: store.selectedMessage,
-                    topic: $publishTopic,
-                    payload: $publishPayload,
-                    retain: $publishRetain,
-                    qos: $publishQoS,
-                    onPublish: store.publish,
-                    onDeleteTree: store.deleteTree
-                )
-                .frame(minWidth: 320, idealWidth: 360)
-            }
+            ExplorerSplitView(
+                root: store.tree,
+                selectedTopic: store.selectedTopic,
+                selectedMessage: store.selectedMessage,
+                expandedTopics: store.expandedTopics,
+                searchText: $searchText,
+                topicPanelWidth: $topicPanelWidth,
+                publishTopic: $publishTopic,
+                publishPayload: $publishPayload,
+                publishRetain: $publishRetain,
+                publishQoS: $publishQoS,
+                onSelect: store.selectTopic,
+                onToggle: store.toggleTopic,
+                onPublish: store.publish,
+                onDeleteTree: store.deleteTree
+            )
 
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
@@ -244,6 +238,103 @@ private extension View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(AppColors.fieldBorder)
             }
+    }
+}
+
+struct ExplorerSplitView: View {
+    let root: TopicNode
+    let selectedTopic: String
+    let selectedMessage: MQTTMessage?
+    let expandedTopics: Set<String>
+    @Binding var searchText: String
+    @Binding var topicPanelWidth: CGFloat?
+    @Binding var publishTopic: String
+    @Binding var publishPayload: String
+    @Binding var publishRetain: Bool
+    @Binding var publishQoS: Int
+    let onSelect: (String) -> Void
+    let onToggle: (String) -> Void
+    let onPublish: (String, String, Bool, Int) -> Void
+    let onDeleteTree: (String) -> Void
+    @State private var dragStartWidth: CGFloat?
+
+    private let dividerWidth: CGFloat = 14
+    private let minTopicWidth: CGFloat = 420
+    private let minPublishWidth: CGFloat = 320
+    private let defaultPublishWidth: CGFloat = 360
+
+    var body: some View {
+        GeometryReader { proxy in
+            let availableWidth = proxy.size.width
+            let topicWidth = clampedTopicWidth(for: availableWidth)
+
+            HStack(spacing: 0) {
+                TopicTreePanel(
+                    root: root,
+                    selectedTopic: selectedTopic,
+                    expandedTopics: expandedTopics,
+                    searchText: $searchText,
+                    onSelect: onSelect,
+                    onToggle: onToggle
+                )
+                .frame(width: topicWidth)
+
+                SplitDivider()
+                    .frame(width: dividerWidth)
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                if dragStartWidth == nil {
+                                    dragStartWidth = topicWidth
+                                }
+
+                                topicPanelWidth = clampedTopicWidth(
+                                    (dragStartWidth ?? topicWidth) + value.translation.width,
+                                    availableWidth: availableWidth
+                                )
+                            }
+                            .onEnded { _ in
+                                dragStartWidth = nil
+                            }
+                    )
+
+                PublishPanel(
+                    selectedTopic: selectedTopic,
+                    selectedMessage: selectedMessage,
+                    topic: $publishTopic,
+                    payload: $publishPayload,
+                    retain: $publishRetain,
+                    qos: $publishQoS,
+                    onPublish: onPublish,
+                    onDeleteTree: onDeleteTree
+                )
+                .frame(width: max(minPublishWidth, availableWidth - topicWidth - dividerWidth))
+            }
+        }
+    }
+
+    private func clampedTopicWidth(for availableWidth: CGFloat) -> CGFloat {
+        let preferredWidth = topicPanelWidth ?? max(minTopicWidth, availableWidth - dividerWidth - defaultPublishWidth)
+        return clampedTopicWidth(preferredWidth, availableWidth: availableWidth)
+    }
+
+    private func clampedTopicWidth(_ width: CGFloat, availableWidth: CGFloat) -> CGFloat {
+        let maxTopicWidth = max(minTopicWidth, availableWidth - dividerWidth - minPublishWidth)
+        return min(max(width, minTopicWidth), maxTopicWidth)
+    }
+}
+
+struct SplitDivider: View {
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.clear)
+
+            Capsule()
+                .fill(AppColors.fieldBorder)
+                .frame(width: 4)
+        }
+        .contentShape(Rectangle())
     }
 }
 
