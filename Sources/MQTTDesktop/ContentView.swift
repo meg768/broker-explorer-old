@@ -65,12 +65,21 @@ struct ContentView: View {
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
-                .disabled(store.isScanning)
+                .disabled(!store.isConnected || store.isScanning)
 
-                Button {
-                    store.isConnected ? store.disconnect() : store.connect()
-                } label: {
-                    Label(store.isConnected ? "Disconnect" : "Connect", systemImage: store.isConnected ? "bolt.slash" : "bolt.horizontal")
+                if store.isConnected {
+                    Button {
+                        store.disconnect()
+                    } label: {
+                        Label("Disconnect", systemImage: "bolt.slash")
+                    }
+                } else {
+                    Button {
+                        store.connect()
+                    } label: {
+                        Label("Connect", systemImage: "bolt.horizontal")
+                    }
+                    .disabled(store.isScanning)
                 }
             }
         }
@@ -150,13 +159,23 @@ struct ConnectionPanel: View {
                     HStack(spacing: 8) {
                         FieldLabel("Broker")
 
-                        Button {
-                            isConnected ? onDisconnect() : onConnect()
-                        } label: {
-                            PillLabel(isConnected ? "Disconnect" : "Connect")
+                        if isConnected {
+                            Button {
+                                onDisconnect()
+                            } label: {
+                                PillLabel("Disconnect")
+                            }
+                            .buttonStyle(.plain)
+                        } else if isScanning {
+                            PillLabel("Connecting", isActive: false)
+                        } else {
+                            Button {
+                                onConnect()
+                            } label: {
+                                PillLabel("Connect")
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("r", modifiers: [.command])
                     }
 
                     Text(connection.displayName)
