@@ -292,13 +292,13 @@ struct TopicNodeRow: View {
                     Image(systemName: node.children.isEmpty ? "circle.fill" : (isExpanded ? "chevron.down" : "chevron.right"))
                         .font(.system(size: node.children.isEmpty ? 5 : 10, weight: .bold))
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(node.children.isEmpty ? .tertiary : .secondary)
+                        .foregroundStyle(node.children.isEmpty ? AppColors.treeMuted : AppColors.treeDisclosure)
                 }
                 .buttonStyle(.plain)
 
                 Text(node.name)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? Color.primary : AppColors.topicName)
+                    .foregroundStyle(isSelected ? AppColors.heading : AppColors.topicName)
                     .lineLimit(1)
 
                 if let preview = node.message?.payloadPreview, !preview.isEmpty {
@@ -315,7 +315,7 @@ struct TopicNodeRow: View {
                 if let count = node.childCountLabel {
                     Text(count)
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.badgeText)
                         .lineLimit(1)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -499,7 +499,7 @@ struct PillLabel: View {
             return AppColors.danger
         }
 
-        return isActive ? AppColors.primaryStrong : .secondary
+        return isActive ? AppColors.primaryStrong : AppColors.badgeText
     }
 
     private var background: Color {
@@ -558,7 +558,7 @@ struct IconPillLabel: View {
             return AppColors.danger
         }
 
-        return isActive ? AppColors.primaryStrong : .secondary
+        return isActive ? AppColors.primaryStrong : AppColors.badgeText
     }
 
     private var background: Color {
@@ -708,7 +708,10 @@ enum AppColors {
     static let fieldBorder = Color(red: 0.82, green: 0.86, blue: 0.92)
     static let caption = Color(red: 0.44, green: 0.46, blue: 0.49)
     static let heading = Color(red: 0.13, green: 0.16, blue: 0.24)
-    static let topicName = Color(nsColor: .secondaryLabelColor)
+    static let topicName = Color(red: 0.36, green: 0.38, blue: 0.42)
+    static let treeDisclosure = Color(red: 0.54, green: 0.58, blue: 0.64)
+    static let treeMuted = Color(red: 0.76, green: 0.80, blue: 0.86)
+    static let badgeText = Color(red: 0.35, green: 0.38, blue: 0.46)
     static let primary = Color(red: 0.18, green: 0.74, blue: 0.51)
     static let primaryStrong = Color(red: 0.08, green: 0.52, blue: 0.36)
     static let badgeBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
