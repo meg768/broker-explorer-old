@@ -68,17 +68,14 @@ actor MQTTService {
             return
         }
 
-        self.client = nil
-        try await client.disconnect()
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            client.shutdown { error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
+        do {
+            try await client.disconnect()
+        } catch {
+            // Shutdown is still required; MQTTClient traps if deinitialized before shutdown.
         }
+
+        try await client.shutdown()
+        self.client = nil
     }
 
     func publish(topic: String, payload: String, retain: Bool, qos: Int) async throws {
