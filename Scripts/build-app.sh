@@ -29,7 +29,7 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
 cp "${BUILD_DIR}/${EXECUTABLE_NAME}" "${MACOS_DIR}/${EXECUTABLE_NAME}"
 cp "${ROOT_DIR}/Resources/Info.plist" "${CONTENTS_DIR}/Info.plist"
+cp "${ROOT_DIR}/Resources/MQTTDesktopIcon.icns" "${RESOURCES_DIR}/MQTTDesktopIcon.icns"
 chmod +x "${MACOS_DIR}/${EXECUTABLE_NAME}"
 
 echo "Built ${APP_DIR}"
-
