@@ -147,7 +147,9 @@ final class ExplorerStore: ObservableObject {
     }
 
     private func receive(_ message: MQTTMessage) {
-        scanCompletionTask?.cancel()
+        if isScanning && !message.retain {
+            return
+        }
 
         if message.payload.isEmpty {
             messages.removeAll { $0.topic == message.topic }
@@ -164,8 +166,6 @@ final class ExplorerStore: ObservableObject {
         if selectedTopic.isEmpty, let firstTopic = messages.first?.topic {
             selectedTopic = firstTopic
         }
-
-        scheduleScanCompletion()
     }
 
     private func publishLocally(topic: String, payload: String, retain: Bool, qos: Int) {
