@@ -32,6 +32,13 @@ struct BrokerConnection: Equatable {
 
         return components.string ?? baseURL
     }
+
+    var canAutoConnect: Bool {
+        !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !password.isEmpty
+            && !port.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 }
 
 struct MQTTMessage: Identifiable, Equatable {

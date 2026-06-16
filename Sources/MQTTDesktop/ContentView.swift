@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var publishPayload = ""
     @State private var publishRetain = true
     @State private var publishQoS = 1
+    @State private var didAutoConnect = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -76,6 +77,7 @@ struct ContentView: View {
         }
         .onAppear {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
+            autoConnectIfPossible()
         }
         .onChange(of: store.selectedTopic) { _ in
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
@@ -106,6 +108,16 @@ struct ContentView: View {
             publishRetain = true
             publishQoS = 1
         }
+    }
+
+    private func autoConnectIfPossible() {
+        guard !didAutoConnect, store.connection.canAutoConnect else {
+            return
+        }
+
+        didAutoConnect = true
+        settingsOpen = false
+        store.connect()
     }
 }
 
