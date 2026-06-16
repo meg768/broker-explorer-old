@@ -71,7 +71,6 @@ struct ContentView: View {
                     } label: {
                         Label("Connect", systemImage: "bolt.horizontal")
                     }
-                    .disabled(store.isScanning)
                 }
             }
         }
@@ -157,10 +156,10 @@ struct ConnectionPanel: View {
                             Button {
                                 onConnect()
                             } label: {
-                                PillLabel(isScanning ? "Connecting" : "Connect", isActive: !isScanning)
+                                PillLabel(isScanning ? "Reconnect" : "Connect")
                             }
                             .buttonStyle(.plain)
-                            .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isScanning)
+                            .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                     }
 
@@ -209,7 +208,7 @@ struct ConnectionPanel: View {
                     }
                 }
                 .onSubmit {
-                    guard !connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !isScanning else {
+                    guard !connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                         return
                     }
 

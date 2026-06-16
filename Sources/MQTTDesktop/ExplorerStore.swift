@@ -13,6 +13,7 @@ final class ExplorerStore: ObservableObject {
 
     private let mqttService = MQTTService()
     private var scanCompletionTask: Task<Void, Never>?
+    private var connectionGeneration = 0
 
     var tree: TopicNode {
         TopicTreeBuilder.build(messages: messages)
@@ -27,6 +28,8 @@ final class ExplorerStore: ObservableObject {
     }
 
     func connect() {
+        connectionGeneration += 1
+        let generation = connectionGeneration
         scanCompletionTask?.cancel()
         isConnected = false
         isScanning = true
@@ -42,16 +45,24 @@ final class ExplorerStore: ObservableObject {
                 try await mqttService.connect(
                     connection: connection,
                     onMessage: { [weak self] message in
-                        await self?.receive(message)
+                        await self?.receive(message, generation: generation)
                     },
                     onClose: { [weak self] error in
-                        await self?.connectionClosed(error: error)
+                        await self?.connectionClosed(error: error, generation: generation)
                     }
                 )
+                guard generation == connectionGeneration else {
+                    return
+                }
+
                 isConnected = true
                 status = .pending("Reading retained topics from \(brokerName)...")
                 scheduleScanCompletion()
             } catch {
+                guard generation == connectionGeneration else {
+                    return
+                }
+
                 isConnected = false
                 isScanning = false
                 status = .error(error.localizedDescription)
@@ -60,6 +71,7 @@ final class ExplorerStore: ObservableObject {
     }
 
     func disconnect() {
+        connectionGeneration += 1
         scanCompletionTask?.cancel()
         isConnected = false
         isScanning = false
@@ -149,7 +161,11 @@ final class ExplorerStore: ObservableObject {
         }
     }
 
-    private func receive(_ message: MQTTMessage) {
+    private func receive(_ message: MQTTMessage, generation: Int) {
+        guard generation == connectionGeneration else {
+            return
+        }
+
         scanCompletionTask?.cancel()
 
         if message.payload.isEmpty {
@@ -212,7 +228,11 @@ final class ExplorerStore: ObservableObject {
         }
     }
 
-    private func connectionClosed(error: String?) {
+    private func connectionClosed(error: String?, generation: Int) {
+        guard generation == connectionGeneration else {
+            return
+        }
+
         guard isConnected else {
             return
         }
