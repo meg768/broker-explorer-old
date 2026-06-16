@@ -80,7 +80,6 @@ final class ExplorerStore: ObservableObject {
 
     func selectTopic(_ topic: String) {
         selectedTopic = topic
-        expandedTopics.formUnion(ancestorTopics(for: topic))
     }
 
     func toggleTopic(_ topic: String) {
@@ -156,10 +155,9 @@ final class ExplorerStore: ObservableObject {
         }
 
         if selectedTopic.isEmpty, let firstTopic = messages.first?.topic {
-            selectTopic(firstTopic)
+            selectedTopic = firstTopic
         }
 
-        expandedTopics.formUnion(ancestorTopics(for: message.topic))
         scheduleScanCompletion()
     }
 
