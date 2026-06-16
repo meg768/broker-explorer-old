@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -257,6 +258,7 @@ struct ExplorerSplitView: View {
     let onPublish: (String, String, Bool, Int) -> Void
     let onDeleteTree: (String) -> Void
     @State private var dragStartWidth: CGFloat?
+    @State private var dragGrabOffset: CGFloat = 0
 
     private let dividerWidth: CGFloat = 14
     private let minTopicWidth: CGFloat = 420
@@ -286,15 +288,17 @@ struct ExplorerSplitView: View {
                             .onChanged { value in
                                 if dragStartWidth == nil {
                                     dragStartWidth = topicWidth
+                                    dragGrabOffset = value.startLocation.x - (dividerWidth / 2)
                                 }
 
                                 topicPanelWidth = clampedTopicWidth(
-                                    (dragStartWidth ?? topicWidth) + value.translation.width,
+                                    (dragStartWidth ?? topicWidth) + value.translation.width + dragGrabOffset,
                                     availableWidth: availableWidth
                                 )
                             }
                             .onEnded { _ in
                                 dragStartWidth = nil
+                                dragGrabOffset = 0
                             }
                     )
 
@@ -335,6 +339,13 @@ struct SplitDivider: View {
                 .frame(width: 4)
         }
         .contentShape(Rectangle())
+        .onHover { isHovering in
+            if isHovering {
+                NSCursor.resizeLeftRight.set()
+            } else {
+                NSCursor.arrow.set()
+            }
+        }
     }
 }
 
