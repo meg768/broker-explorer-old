@@ -176,20 +176,16 @@ struct ConnectionPanel: View {
 
                     GridRow {
                         TextField("mqtt://broker.example.com", text: $connection.url)
-                            .textFieldStyle(.roundedBorder)
-                            .foregroundStyle(AppColors.heading)
+                            .settingsTextField()
 
                         TextField("", text: $connection.username)
-                            .textFieldStyle(.roundedBorder)
-                            .foregroundStyle(AppColors.heading)
+                            .settingsTextField()
 
                         SecureField("", text: $connection.password)
-                            .textFieldStyle(.roundedBorder)
-                            .foregroundStyle(AppColors.heading)
+                            .settingsTextField()
 
                         TextField("1883", text: $connection.port)
-                            .textFieldStyle(.roundedBorder)
-                            .foregroundStyle(AppColors.heading)
+                            .settingsTextField()
                             .frame(width: 84)
                     }
                 }
@@ -198,6 +194,23 @@ struct ConnectionPanel: View {
         .padding(18)
         .background(AppColors.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private extension View {
+    func settingsTextField() -> some View {
+        self
+            .textFieldStyle(.plain)
+            .foregroundStyle(AppColors.heading)
+            .font(.system(size: 13, weight: .medium))
+            .padding(.horizontal, 10)
+            .frame(height: 34)
+            .background(AppColors.inputBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(AppColors.fieldBorder)
+            }
     }
 }
 
