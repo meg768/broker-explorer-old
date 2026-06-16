@@ -185,26 +185,8 @@ struct TopicTreePanel: View {
             HStack(spacing: 10) {
                 FieldLabel("Topics")
 
-                TextField("Filter", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.horizontal, 10)
-                    .frame(width: 220, height: 26)
-                    .background(AppColors.inputBackground)
-                    .clipShape(Capsule())
-                    .overlay {
-                        Capsule()
-                            .stroke(AppColors.fieldBorder)
-                    }
-
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        PillLabel("Clear", isActive: false)
-                    }
-                    .buttonStyle(.plain)
-                }
+                FilterField(text: $searchText)
+                    .frame(width: 260)
 
                 Spacer()
 
@@ -372,7 +354,7 @@ struct PublishPanel: View {
                 Button {
                     onPublish(topic, payload, retain, qos)
                 } label: {
-                    PillLabel("Publish")
+                    IconPillLabel("Publish", systemImage: "paperplane")
                 }
                 .buttonStyle(.plain)
                 .disabled(!canPublish || normalizeTopic(topic).isEmpty)
@@ -380,7 +362,7 @@ struct PublishPanel: View {
                 Button {
                     onDeleteTree(topic)
                 } label: {
-                    PillLabel("Delete", isDanger: true)
+                    IconPillLabel("Delete", systemImage: "trash", isDanger: true)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canPublish || normalizeTopic(topic).isEmpty)
@@ -409,7 +391,7 @@ struct PublishPanel: View {
                 Button {
                     formatJSON()
                 } label: {
-                    PillLabel(canFormatJSON ? "JSON" : "Text", isActive: canFormatJSON)
+                    IconPillLabel(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft", isActive: canFormatJSON)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canFormatJSON)
@@ -417,14 +399,14 @@ struct PublishPanel: View {
                 Button {
                     qos = (qos + 1) % 3
                 } label: {
-                    PillLabel("QoS \(qos)")
+                    IconPillLabel("QoS \(qos)", systemImage: "slider.horizontal.3")
                 }
                 .buttonStyle(.plain)
 
                 Button {
                     retain.toggle()
                 } label: {
-                    PillLabel("Retain", isActive: retain)
+                    IconPillLabel("Retain", systemImage: "pin", isActive: retain)
                 }
                 .buttonStyle(.plain)
             }
@@ -517,6 +499,100 @@ struct PillLabel: View {
         }
 
         return isActive ? AppColors.primary : AppColors.fieldBorder
+    }
+}
+
+struct IconPillLabel: View {
+    let text: String
+    let systemImage: String
+    var isActive = true
+    var isDanger = false
+
+    init(_ text: String, systemImage: String, isActive: Bool = true, isDanger: Bool = false) {
+        self.text = text
+        self.systemImage = systemImage
+        self.isActive = isActive
+        self.isDanger = isDanger
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .font(.system(size: 11, weight: .bold))
+
+            Text(text)
+                .font(.system(size: 13, weight: .bold))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 24)
+        .foregroundStyle(foreground)
+        .background(background)
+        .clipShape(Capsule())
+        .overlay {
+            Capsule()
+                .stroke(border, lineWidth: 1.5)
+        }
+        .contentShape(Capsule())
+    }
+
+    private var foreground: Color {
+        if isDanger {
+            return AppColors.danger
+        }
+
+        return isActive ? AppColors.primaryStrong : .secondary
+    }
+
+    private var background: Color {
+        if isDanger {
+            return AppColors.dangerBackground
+        }
+
+        return isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground
+    }
+
+    private var border: Color {
+        if isDanger {
+            return AppColors.danger.opacity(0.75)
+        }
+
+        return isActive ? AppColors.primary : AppColors.fieldBorder
+    }
+}
+
+struct FilterField: View {
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            TextField("Filter topics", text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, weight: .semibold))
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 9)
+        .frame(height: 26)
+        .background(AppColors.inputBackground)
+        .clipShape(Capsule())
+        .overlay {
+            Capsule()
+                .stroke(AppColors.fieldBorder)
+        }
     }
 }
 
