@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var publishPayload = ""
     @State private var publishRetain = true
     @State private var publishQoS = 1
+    @State private var editorResetID = UUID()
     @State private var didAutoConnect = false
     @State private var topicPanelWidth = SettingsStore.loadTopicPanelWidth()
 
@@ -32,6 +33,7 @@ struct ContentView: View {
                 publishPayload: $publishPayload,
                 publishRetain: $publishRetain,
                 publishQoS: $publishQoS,
+                editorResetID: editorResetID,
                 onSelect: store.selectTopic,
                 onToggle: store.toggleTopic,
                 onPublish: store.publish,
@@ -112,6 +114,8 @@ struct ContentView: View {
             publishRetain = true
             publishQoS = 1
         }
+
+        editorResetID = UUID()
     }
 
     private func clearPublishPanel() {
@@ -119,6 +123,7 @@ struct ContentView: View {
         publishPayload = ""
         publishRetain = true
         publishQoS = 1
+        editorResetID = UUID()
     }
 
     private func autoConnectIfPossible() {
@@ -262,6 +267,7 @@ struct ExplorerSplitView: View {
     @Binding var publishPayload: String
     @Binding var publishRetain: Bool
     @Binding var publishQoS: Int
+    let editorResetID: UUID
     let onSelect: (String) -> Void
     let onToggle: (String) -> Void
     let onPublish: (String, String, Bool, Int) -> Void
@@ -307,6 +313,7 @@ struct ExplorerSplitView: View {
                     payload: $publishPayload,
                     retain: $publishRetain,
                     qos: $publishQoS,
+                    editorResetID: editorResetID,
                     onPublish: onPublish,
                     onDeleteTree: onDeleteTree
                 )
@@ -512,6 +519,7 @@ struct PublishPanel: View {
     @Binding var payload: String
     @Binding var retain: Bool
     @Binding var qos: Int
+    let editorResetID: UUID
     let onPublish: (String, String, Bool, Int) -> Void
     let onDeleteTree: (String) -> Void
 
@@ -584,6 +592,7 @@ struct PublishPanel: View {
             }
 
             JSONTextEditor(text: $payload)
+                .id(editorResetID)
                 .background(AppColors.editorBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay {
