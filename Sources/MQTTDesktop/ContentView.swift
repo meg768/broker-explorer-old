@@ -116,30 +116,7 @@ struct ConnectionPanel: View {
                     HStack(spacing: 8) {
                         FieldLabel("Broker")
 
-                        Button {
-                            settingsOpen.toggle()
-                        } label: {
-                            PillLabel("Settings")
-                        }
-                        .buttonStyle(.plain)
-
                         ConnectionBadge(text: isConnected ? "Connected" : "Offline", isActive: isConnected)
-
-                        Button {
-                            onRefresh()
-                        } label: {
-                            PillLabel("Refresh", isActive: !isScanning)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isScanning)
-
-                        Button {
-                            isConnected ? onDisconnect() : onConnect()
-                        } label: {
-                            PillLabel(isConnected ? "Disconnect" : "Connect")
-                        }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut("r", modifiers: [.command])
                     }
 
                     Text(connection.displayName)
@@ -207,9 +184,6 @@ struct TopicTreePanel: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 FieldLabel("Topics")
-
-                FilterField(text: $searchText)
-                    .frame(width: 260)
 
                 Spacer()
 
@@ -385,7 +359,7 @@ struct PublishPanel: View {
                 Button {
                     onDeleteTree(topic)
                 } label: {
-                    IconPillLabel("Delete", systemImage: "trash", isDanger: true)
+                    IconPillLabel("Delete", systemImage: "trash")
                 }
                 .buttonStyle(.plain)
                 .disabled(!canPublish || normalizeTopic(topic).isEmpty)
