@@ -3,6 +3,7 @@ import SwiftUI
 
 struct JSONTextEditor: NSViewRepresentable {
     @Binding var text: String
+    private static let baseTextColor = NSColor(calibratedRed: 0.13, green: 0.16, blue: 0.24, alpha: 1)
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text)
@@ -22,7 +23,7 @@ struct JSONTextEditor: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         textView.allowsUndo = true
         textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        textView.textColor = .labelColor
+        textView.textColor = Self.baseTextColor
         textView.backgroundColor = .clear
         textView.textContainerInset = NSSize(width: 10, height: 10)
         textView.textContainer?.widthTracksTextView = false
@@ -85,7 +86,7 @@ struct JSONTextEditor: NSViewRepresentable {
             storage.beginEditing()
             storage.setAttributes([
                 .font: baseFont,
-                .foregroundColor: NSColor.labelColor
+                .foregroundColor: JSONTextEditor.baseTextColor
             ], range: fullRange)
 
             guard isJSONObject(string) else {
