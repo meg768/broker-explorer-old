@@ -255,8 +255,6 @@ struct ExplorerSplitView: View {
     let onToggle: (String) -> Void
     let onPublish: (String, String, Bool, Int) -> Void
     let onDeleteTree: (String) -> Void
-    @State private var dragStartWidth: CGFloat?
-    @State private var dragGrabOffset: CGFloat = 0
 
     private let dividerWidth: CGFloat = 14
     private let minTopicWidth: CGFloat = 420
@@ -282,21 +280,12 @@ struct ExplorerSplitView: View {
                 SplitDivider()
                     .frame(width: dividerWidth)
                     .gesture(
-                        DragGesture(minimumDistance: 0)
+                        DragGesture(minimumDistance: 0, coordinateSpace: .named("ExplorerSplitView"))
                             .onChanged { value in
-                                if dragStartWidth == nil {
-                                    dragStartWidth = topicWidth
-                                    dragGrabOffset = value.startLocation.x - (dividerWidth / 2)
-                                }
-
                                 topicPanelWidth = clampedTopicWidth(
-                                    (dragStartWidth ?? topicWidth) + value.translation.width + dragGrabOffset,
+                                    value.location.x - (dividerWidth / 2),
                                     availableWidth: availableWidth
                                 )
-                            }
-                            .onEnded { _ in
-                                dragStartWidth = nil
-                                dragGrabOffset = 0
                             }
                     )
 
@@ -312,6 +301,7 @@ struct ExplorerSplitView: View {
                 )
                 .frame(width: max(minPublishWidth, availableWidth - topicWidth - dividerWidth))
             }
+            .coordinateSpace(name: "ExplorerSplitView")
         }
     }
 
