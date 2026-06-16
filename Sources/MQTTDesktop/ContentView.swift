@@ -154,8 +154,8 @@ struct ConnectionPanel: View {
                 Spacer()
 
                 HStack(spacing: 8) {
-                    MQTTIcon()
-                        .frame(width: 32, height: 32)
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 30, weight: .bold))
                     Text("MQTT")
                         .font(.system(size: 28, weight: .bold))
                     Text("Desktop")
@@ -194,41 +194,6 @@ struct ConnectionPanel: View {
         .padding(18)
         .background(AppColors.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-struct MQTTIcon: View {
-    var body: some View {
-        Canvas { context, size in
-            let side = min(size.width, size.height)
-            let origin = CGPoint(x: (size.width - side) / 2, y: (size.height - side) / 2)
-            let bounds = CGRect(origin: origin, size: CGSize(width: side, height: side))
-            let color = AppColors.primaryStrong
-
-            context.stroke(
-                Path(ellipseIn: bounds.insetBy(dx: side * 0.04, dy: side * 0.04)),
-                with: .color(color),
-                lineWidth: side * 0.09
-            )
-
-            let waveCenter = CGPoint(x: bounds.minX + side * 0.05, y: bounds.maxY - side * 0.05)
-            for radius in [side * 0.42, side * 0.68, side * 0.93] {
-                var wave = Path()
-                wave.addArc(
-                    center: waveCenter,
-                    radius: radius,
-                    startAngle: .degrees(-88),
-                    endAngle: .degrees(-8),
-                    clockwise: false
-                )
-                context.stroke(
-                    wave,
-                    with: .color(color),
-                    style: StrokeStyle(lineWidth: side * 0.13, lineCap: .round)
-                )
-            }
-        }
-        .accessibilityHidden(true)
     }
 }
 

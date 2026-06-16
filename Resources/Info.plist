@@ -8,8 +8,6 @@
 	<string>MQTTDesktop</string>
 	<key>CFBundleIdentifier</key>
 	<string>se.meg768.mqtt-desktop</string>
-	<key>CFBundleIconFile</key>
-	<string>MQTTDesktopIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -28,3 +26,4 @@
 	<string>NSApplication</string>
 </dict>
 </plist>
+
