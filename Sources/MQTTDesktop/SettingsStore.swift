@@ -5,8 +5,8 @@ enum SettingsStore {
     private static let usernameKey = "broker.username"
     private static let passwordKey = "broker.password"
     private static let portKey = "broker.port"
-    private static let settingsOpenKey = "ui.settingsOpen"
     private static let searchTextKey = "ui.searchText"
+    private static let topicPanelWidthKey = "ui.topicPanelWidth"
 
     static func loadConnection() -> BrokerConnection {
         BrokerConnection(
@@ -24,23 +24,29 @@ enum SettingsStore {
         UserDefaults.standard.set(connection.port, forKey: portKey)
     }
 
-    static func loadSettingsOpen() -> Bool {
-        guard UserDefaults.standard.object(forKey: settingsOpenKey) != nil else {
-            return true
-        }
-
-        return UserDefaults.standard.bool(forKey: settingsOpenKey)
-    }
-
-    static func save(settingsOpen: Bool) {
-        UserDefaults.standard.set(settingsOpen, forKey: settingsOpenKey)
-    }
-
     static func loadSearchText() -> String {
         UserDefaults.standard.string(forKey: searchTextKey) ?? ""
     }
 
     static func save(searchText: String) {
         UserDefaults.standard.set(searchText, forKey: searchTextKey)
+    }
+
+    static func loadTopicPanelWidth() -> CGFloat? {
+        guard UserDefaults.standard.object(forKey: topicPanelWidthKey) != nil else {
+            return nil
+        }
+
+        let width = UserDefaults.standard.double(forKey: topicPanelWidthKey)
+        return width > 0 ? CGFloat(width) : nil
+    }
+
+    static func save(topicPanelWidth: CGFloat?) {
+        guard let topicPanelWidth else {
+            UserDefaults.standard.removeObject(forKey: topicPanelWidthKey)
+            return
+        }
+
+        UserDefaults.standard.set(Double(topicPanelWidth), forKey: topicPanelWidthKey)
     }
 }

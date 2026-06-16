@@ -104,6 +104,9 @@ final class ExplorerStore: ObservableObject {
             return
         }
 
+        selectedTopic = normalized
+        expandedTopics.formUnion(ancestorTopics(for: normalized))
+
         Task {
             do {
                 try await mqttService.publish(topic: normalized, payload: payload, retain: retain, qos: qos)
@@ -161,10 +164,6 @@ final class ExplorerStore: ObservableObject {
             messages.sort { $0.topic.localizedStandardCompare($1.topic) == .orderedAscending }
         }
 
-        if selectedTopic.isEmpty, let firstTopic = messages.first?.topic {
-            selectedTopic = firstTopic
-        }
-
         scheduleScanCompletion()
     }
 
@@ -194,7 +193,6 @@ final class ExplorerStore: ObservableObject {
         }
 
         status = .success("Published \(topic) (\(retain ? "retained" : "live"), QoS \(message.qos)).")
-        selectTopic(topic)
     }
 
     private func scheduleScanCompletion() {

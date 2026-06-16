@@ -4,19 +4,21 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var store = ExplorerStore()
     @State private var searchText = ""
-    @State private var settingsOpen = SettingsStore.loadSettingsOpen()
+    @State private var settingsOpen = SettingsStore.loadConnection().url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     @State private var publishTopic = ""
     @State private var publishPayload = ""
     @State private var publishRetain = true
     @State private var publishQoS = 1
     @State private var didAutoConnect = false
-    @State private var topicPanelWidth: CGFloat?
+    @State private var topicPanelWidth = SettingsStore.loadTopicPanelWidth()
 
     var body: some View {
         VStack(spacing: 12) {
             ConnectionPanel(
                 connection: $store.connection,
-                settingsOpen: $settingsOpen
+                isScanning: store.isScanning,
+                settingsOpen: $settingsOpen,
+                onConnect: store.connect
             )
 
             ExplorerSplitView(
@@ -94,8 +96,8 @@ struct ContentView: View {
         .onChange(of: store.connection) { connection in
             SettingsStore.save(connection: connection)
         }
-        .onChange(of: settingsOpen) { isOpen in
-            SettingsStore.save(settingsOpen: isOpen)
+        .onChange(of: topicPanelWidth) { width in
+            SettingsStore.save(topicPanelWidth: width)
         }
     }
 
@@ -133,7 +135,9 @@ struct ContentView: View {
 
 struct ConnectionPanel: View {
     @Binding var connection: BrokerConnection
+    let isScanning: Bool
     @Binding var settingsOpen: Bool
+    let onConnect: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -148,6 +152,16 @@ struct ConnectionPanel: View {
                             PillLabel("Settings")
                         }
                         .buttonStyle(.plain)
+
+                        if settingsOpen {
+                            Button {
+                                onConnect()
+                            } label: {
+                                PillLabel(isScanning ? "Connecting" : "Connect", isActive: !isScanning)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isScanning)
+                        }
                     }
 
                     Text(connection.displayName)
@@ -193,6 +207,13 @@ struct ConnectionPanel: View {
                             .settingsTextField()
                             .frame(width: 84)
                     }
+                }
+                .onSubmit {
+                    guard !connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !isScanning else {
+                        return
+                    }
+
+                    onConnect()
                 }
             }
         }
@@ -509,7 +530,7 @@ struct PublishPanel: View {
                 .disabled(normalizeTopic(topic).isEmpty)
 
                 Button {
-                    onDeleteTree(topic)
+                    confirmDeleteTree()
                 } label: {
                     IconPillLabel("Delete", systemImage: "trash")
                 }
@@ -594,6 +615,26 @@ struct PublishPanel: View {
         }
 
         payload = pretty
+    }
+
+    private func confirmDeleteTree() {
+        let normalized = normalizeTopic(topic)
+        guard !normalized.isEmpty else {
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Delete retained topics?"
+        alert.informativeText = "Delete all retained topics under \"\(normalized)/#\"?"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
+
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+
+        onDeleteTree(normalized)
     }
 }
 
