@@ -798,9 +798,8 @@ struct StatusBar: View {
             Text(topicCount == 1 ? "1 topic" : "\(topicCount) topics")
                 .foregroundStyle(AppColors.badgeText)
         }
-        .font(.caption)
-        .fontWeight(.semibold)
-        .frame(height: 34)
+        .font(.system(size: 13, weight: .semibold))
+        .frame(height: 40)
         .padding(.horizontal, 14)
         .background(AppColors.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
