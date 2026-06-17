@@ -912,7 +912,7 @@ enum AppColors {
     static let previewText = Color(red: 0.02, green: 0.59, blue: 0.41)
     static let danger = Color(red: 0.86, green: 0.20, blue: 0.18)
     static let dangerBackground = Color(red: 0.86, green: 0.20, blue: 0.18).opacity(0.10)
-    static let selectionBackground = Color.accentColor.opacity(0.16)
+    static let selectionBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
     static let readOnlyBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
     static let readOnlyBorder = Color(red: 0.69, green: 0.93, blue: 0.84)
 }
