@@ -179,11 +179,13 @@ struct ConnectionPanel: View {
                 HStack(spacing: 8) {
                     AppLogoIcon()
                         .frame(width: 34, height: 34)
-                    Text("MQTT")
-                        .font(.system(size: 28, weight: .bold))
-                    Text("Desktop")
-                        .font(.system(size: 14, weight: .semibold, design: .serif).italic())
-                        .baselineOffset(-10)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("MQTT")
+                            .font(.system(size: 28, weight: .bold))
+                        Text("Desktop")
+                            .font(.system(size: 13, weight: .semibold, design: .serif).italic())
+                            .baselineOffset(-14)
+                    }
                 }
                 .foregroundStyle(AppColors.primaryStrong)
             }
