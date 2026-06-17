@@ -672,7 +672,7 @@ struct PillLabel: View {
             .clipShape(Capsule())
             .overlay {
                 Capsule()
-                    .stroke(border, lineWidth: 1.5)
+                    .stroke(border, lineWidth: 1)
             }
             .contentShape(Capsule())
     }
@@ -698,7 +698,7 @@ struct PillLabel: View {
             return AppColors.danger.opacity(0.75)
         }
 
-        return isActive ? AppColors.primary : AppColors.fieldBorder
+        return isActive ? AppColors.primary.opacity(0.65) : AppColors.fieldBorder
     }
 }
 
@@ -731,7 +731,7 @@ struct IconPillLabel: View {
         .clipShape(Capsule())
         .overlay {
             Capsule()
-                .stroke(border, lineWidth: 1.5)
+                .stroke(border, lineWidth: 1)
         }
         .contentShape(Capsule())
     }
@@ -757,7 +757,7 @@ struct IconPillLabel: View {
             return AppColors.danger.opacity(0.75)
         }
 
-        return isActive ? AppColors.primary : AppColors.fieldBorder
+        return isActive ? AppColors.primary.opacity(0.65) : AppColors.fieldBorder
     }
 }
 
