@@ -182,8 +182,8 @@ struct ConnectionPanel: View {
                     Text("MQTT")
                         .font(.system(size: 28, weight: .bold))
                     Text("Desktop")
-                        .font(.system(size: 15, weight: .semibold, design: .serif).italic())
-                        .baselineOffset(-6)
+                        .font(.system(size: 14, weight: .semibold, design: .serif).italic())
+                        .baselineOffset(-10)
                 }
                 .foregroundStyle(AppColors.primaryStrong)
             }
@@ -892,6 +892,8 @@ struct ConnectionBadge: View {
 }
 
 enum AppColors {
+    private static let theme = AppTheme.green
+
     static let pageBackground = Color(red: 0.84, green: 0.91, blue: 0.90)
     static let windowBackground = pageBackground
     static let panelBackground = Color.white
@@ -904,17 +906,35 @@ enum AppColors {
     static let treeDisclosure = Color(red: 0.54, green: 0.58, blue: 0.64)
     static let treeMuted = Color(red: 0.76, green: 0.80, blue: 0.86)
     static let badgeText = Color(red: 0.35, green: 0.38, blue: 0.46)
-    static let primary = Color(red: 0.18, green: 0.74, blue: 0.51)
-    static let primaryStrong = Color(red: 0.08, green: 0.52, blue: 0.36)
-    static let badgeBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
+    static let primary = theme.primary
+    static let primaryStrong = theme.primaryStrong
+    static let badgeBackground = theme.softBackground
     static let neutralBadgeBackground = Color(red: 0.95, green: 0.97, blue: 0.99)
-    static let previewBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
-    static let previewText = Color(red: 0.02, green: 0.59, blue: 0.41)
+    static let previewBackground = theme.previewBackground
+    static let previewText = theme.previewText
     static let danger = Color(red: 0.86, green: 0.20, blue: 0.18)
     static let dangerBackground = Color(red: 0.86, green: 0.20, blue: 0.18).opacity(0.10)
-    static let selectionBackground = Color(red: 0.91, green: 0.98, blue: 0.95)
-    static let readOnlyBackground = Color(red: 0.93, green: 0.99, blue: 0.96)
-    static let readOnlyBorder = Color(red: 0.69, green: 0.93, blue: 0.84)
+    static let selectionBackground = theme.softBackground
+    static let readOnlyBackground = theme.previewBackground
+    static let readOnlyBorder = theme.softBorder
+}
+
+struct AppTheme {
+    let primary: Color
+    let primaryStrong: Color
+    let softBackground: Color
+    let softBorder: Color
+    let previewBackground: Color
+    let previewText: Color
+
+    static let green = AppTheme(
+        primary: Color(red: 0.18, green: 0.74, blue: 0.51),
+        primaryStrong: Color(red: 0.08, green: 0.52, blue: 0.36),
+        softBackground: Color(red: 0.91, green: 0.98, blue: 0.95),
+        softBorder: Color(red: 0.69, green: 0.93, blue: 0.84),
+        previewBackground: Color(red: 0.93, green: 0.99, blue: 0.96),
+        previewText: Color(red: 0.02, green: 0.59, blue: 0.41)
+    )
 }
 
 extension DateFormatter {
