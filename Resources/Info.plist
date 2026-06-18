@@ -5,15 +5,17 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>MQTTDesktop</string>
+	<string>BrokerExplorer</string>
 	<key>CFBundleIdentifier</key>
-	<string>se.meg768.mqtt-desktop</string>
+	<string>se.meg768.broker-explorer</string>
 	<key>CFBundleIconFile</key>
-	<string>MQTTDesktopIcon</string>
+	<string>BrokerExplorerIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>MQTT Desktop</string>
+	<string>Broker Explorer</string>
+	<key>CFBundleDisplayName</key>
+	<string>Broker Explorer</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

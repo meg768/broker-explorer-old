@@ -2,12 +2,15 @@ import AppKit
 import SwiftUI
 
 @main
-struct MQTTDesktopApp: App {
+struct BrokerExplorerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var appearance = AppearanceSettings()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(appearance)
+                .preferredColorScheme(appearance.preferredColorScheme)
         }
         .windowStyle(.titleBar)
         .commands {

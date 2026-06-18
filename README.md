@@ -1,16 +1,16 @@
-# MQTT Desktop
+# Broker Explorer
 
 A native macOS MQTT explorer, built with SwiftUI.
 
 ## Getting Started
 
-Open `Package.swift` in Xcode, select the `MQTTDesktop` scheme, and run it.
+Open `Package.swift` in Xcode, select the `BrokerExplorer` scheme, and run it.
 
 From the terminal:
 
 ```sh
 swift build
-swift run MQTTDesktop
+swift run BrokerExplorer
 ```
 
 ## Build a Finder App
@@ -20,7 +20,7 @@ Scripts/build-app.sh
 open dist
 ```
 
-Then double-click `MQTT Desktop.app`.
+Then double-click `Broker Explorer.app`.
 
 ## First Milestone
 

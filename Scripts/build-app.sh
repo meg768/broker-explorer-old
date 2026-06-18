@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIGURATION="${1:-release}"
-APP_NAME="MQTT Desktop"
-EXECUTABLE_NAME="MQTTDesktop"
+APP_NAME="Broker Explorer"
+EXECUTABLE_NAME="BrokerExplorer"
 APP_DIR="${ROOT_DIR}/dist/${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
@@ -29,7 +29,7 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
 cp "${BUILD_DIR}/${EXECUTABLE_NAME}" "${MACOS_DIR}/${EXECUTABLE_NAME}"
 cp "${ROOT_DIR}/Resources/Info.plist" "${CONTENTS_DIR}/Info.plist"
-cp "${ROOT_DIR}/Resources/MQTTDesktopIcon.icns" "${RESOURCES_DIR}/MQTTDesktopIcon.icns"
+cp "${ROOT_DIR}/Resources/BrokerExplorerIcon.icns" "${RESOURCES_DIR}/BrokerExplorerIcon.icns"
 chmod +x "${MACOS_DIR}/${EXECUTABLE_NAME}"
 
 echo "Built ${APP_DIR}"

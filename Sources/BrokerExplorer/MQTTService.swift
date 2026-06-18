@@ -18,7 +18,7 @@ actor MQTTService {
         let client = MQTTClient(
             host: endpoint.host,
             port: endpoint.port,
-            identifier: "mqtt-desktop-\(UUID().uuidString)",
+            identifier: "broker-explorer-\(UUID().uuidString)",
             eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup.singleton),
             configuration: .init(
                 userName: endpoint.username,
@@ -29,7 +29,7 @@ actor MQTTService {
 
         self.client = client
 
-        client.addCloseListener(named: "mqtt-desktop-close") { result in
+        client.addCloseListener(named: "broker-explorer-close") { result in
             Task {
                 switch result {
                 case .success:

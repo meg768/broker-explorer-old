@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var appearance: AppearanceSettings
     @StateObject private var store = ExplorerStore()
     @State private var searchText = ""
     @State private var settingsOpen = SettingsStore.loadConnection().url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -42,6 +44,7 @@ struct ContentView: View {
 
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
+        .id("\(appearance.mode.rawValue)-\(appearance.surface.rawValue)")
         .padding(12)
         .frame(minWidth: 1100, minHeight: 660)
         .background(AppColors.pageBackground)
@@ -100,6 +103,12 @@ struct ContentView: View {
         .onChange(of: topicPanelWidth) { width in
             SettingsStore.save(topicPanelWidth: width)
         }
+        .modifier(FunctionKeyShortcut(keyCode: 97, functionKey: NSF6FunctionKey) {
+            appearance.toggle(over: colorScheme)
+        })
+        .modifier(FunctionKeyShortcut(keyCode: 99, functionKey: NSF3FunctionKey) {
+            appearance.cycleSurface()
+        })
     }
 
     private func hydratePublishPanel(from message: MQTTMessage?, topic: String) {
@@ -179,11 +188,11 @@ struct ConnectionPanel: View {
                 HStack(spacing: 8) {
                     AppLogoIcon()
                         .frame(width: 34, height: 34)
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("MQTT")
-                            .font(.system(size: 28, weight: .bold))
-                        Text("desktop")
-                            .font(.system(size: 17, weight: .semibold, design: .serif).italic())
+                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                        Text("Broker")
+                            .font(.system(size: 23, weight: .bold))
+                        Text("Explorer")
+                            .font(.system(size: 23, weight: .bold))
                     }
                 }
                 .foregroundStyle(AppColors.primaryStrong)
@@ -230,13 +239,16 @@ struct ConnectionPanel: View {
 
 struct AppLogoIcon: View {
     private var icon: NSImage {
-        NSImage(named: "MQTTDesktopIcon") ?? NSApplication.shared.applicationIconImage
+        let image = (NSImage(named: "BrokerExplorerIcon") ?? NSApplication.shared.applicationIconImage).copy() as? NSImage
+        image?.isTemplate = true
+        return image ?? NSApplication.shared.applicationIconImage
     }
 
     var body: some View {
         Image(nsImage: icon)
             .resizable()
             .scaledToFit()
+            .foregroundStyle(AppColors.primaryStrong)
     }
 }
 
@@ -805,9 +817,9 @@ struct StatusBar: View {
         HStack(spacing: 8) {
             if status != .idle {
                 Image(systemName: status.symbolName)
-                    .foregroundStyle(status.tint)
+                    .foregroundStyle(statusTint)
                 Text(status.text)
-                    .foregroundStyle(status.tint)
+                    .foregroundStyle(statusTint)
             } else {
                 Image(systemName: "circle")
                     .foregroundStyle(AppColors.treeMuted)
@@ -825,6 +837,17 @@ struct StatusBar: View {
         .padding(.horizontal, 14)
         .background(AppColors.panelBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var statusTint: Color {
+        switch status {
+        case .idle, .pending:
+            return AppColors.badgeText
+        case .success:
+            return AppColors.primaryStrong
+        case .error:
+            return AppColors.danger
+        }
     }
 }
 
@@ -893,49 +916,104 @@ struct ConnectionBadge: View {
 }
 
 enum AppColors {
-    private static let theme = AppTheme.green
+    private static var theme: AppTheme {
+        AppTheme.surface(SettingsStore.loadSurfaceTheme())
+    }
 
-    static let pageBackground = Color(red: 0.84, green: 0.91, blue: 0.90)
-    static let windowBackground = pageBackground
-    static let panelBackground = Color.white
-    static let editorBackground = Color.white
-    static let inputBackground = Color.white
-    static let fieldBorder = Color(red: 0.82, green: 0.86, blue: 0.92)
-    static let caption = Color(red: 0.44, green: 0.46, blue: 0.49)
-    static let heading = Color(red: 0.13, green: 0.16, blue: 0.24)
-    static let topicName = Color(red: 0.36, green: 0.38, blue: 0.42)
-    static let treeDisclosure = Color(red: 0.54, green: 0.58, blue: 0.64)
-    static let treeMuted = Color(red: 0.76, green: 0.80, blue: 0.86)
-    static let badgeText = Color(red: 0.35, green: 0.38, blue: 0.46)
-    static let primary = theme.primary
-    static let primaryStrong = theme.primaryStrong
-    static let badgeBackground = theme.softBackground
-    static let neutralBadgeBackground = Color(red: 0.95, green: 0.97, blue: 0.99)
-    static let previewBackground = theme.previewBackground
-    static let previewText = theme.previewText
-    static let danger = Color(red: 0.86, green: 0.20, blue: 0.18)
-    static let dangerBackground = Color(red: 0.86, green: 0.20, blue: 0.18).opacity(0.10)
-    static let selectionBackground = theme.softBackground
-    static let readOnlyBackground = theme.previewBackground
-    static let readOnlyBorder = theme.softBorder
+    static var pageBackground: Color { theme.pageBackground }
+    static var windowBackground: Color { pageBackground }
+    static var panelBackground: Color { theme.panelBackground }
+    static var editorBackground: Color { theme.editorBackground }
+    static var inputBackground: Color { theme.inputBackground }
+    static var fieldBorder: Color { theme.softBorder }
+    static let caption = adaptive(light: nsColor(0.44, 0.46, 0.49), dark: nsColor(0.66, 0.71, 0.69))
+    static let heading = adaptive(light: nsColor(0.13, 0.16, 0.24), dark: nsColor(0.93, 0.96, 0.94))
+    static let topicName = adaptive(light: nsColor(0.36, 0.38, 0.42), dark: nsColor(0.80, 0.84, 0.82))
+    static let treeDisclosure = adaptive(light: nsColor(0.54, 0.58, 0.64), dark: nsColor(0.61, 0.68, 0.65))
+    static let treeMuted = adaptive(light: nsColor(0.76, 0.80, 0.86), dark: nsColor(0.40, 0.46, 0.43))
+    static let badgeText = adaptive(light: nsColor(0.35, 0.38, 0.46), dark: nsColor(0.72, 0.78, 0.75))
+    static var primary: Color { theme.primary }
+    static var primaryStrong: Color { theme.primaryStrong }
+    static var badgeBackground: Color { theme.softBackground }
+    static var neutralBadgeBackground: Color { theme.neutralBackground }
+    static var previewBackground: Color { theme.previewBackground }
+    static var previewText: Color { theme.previewText }
+    static let danger = adaptive(light: nsColor(0.86, 0.20, 0.18), dark: nsColor(1.00, 0.38, 0.34))
+    static let dangerBackground = danger.opacity(0.10)
+    static var selectionBackground: Color { theme.softBackground }
+    static var readOnlyBackground: Color { theme.previewBackground }
+    static var readOnlyBorder: Color { theme.softBorder }
+
+    static func adaptive(light: NSColor, dark: NSColor) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+        })
+    }
+
+    static func nsColor(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) -> NSColor {
+        NSColor(calibratedRed: red, green: green, blue: blue, alpha: 1)
+    }
 }
 
 struct AppTheme {
+    let pageBackground: Color
+    let panelBackground: Color
+    let editorBackground: Color
+    let inputBackground: Color
     let primary: Color
     let primaryStrong: Color
     let softBackground: Color
     let softBorder: Color
+    let neutralBackground: Color
     let previewBackground: Color
     let previewText: Color
 
-    static let green = AppTheme(
-        primary: Color(red: 0.18, green: 0.74, blue: 0.51),
-        primaryStrong: Color(red: 0.08, green: 0.52, blue: 0.36),
-        softBackground: Color(red: 0.91, green: 0.98, blue: 0.95),
-        softBorder: Color(red: 0.69, green: 0.93, blue: 0.84),
-        previewBackground: Color(red: 0.93, green: 0.99, blue: 0.96),
-        previewText: Color(red: 0.02, green: 0.59, blue: 0.41)
-    )
+    static func surface(_ surface: AppSurfaceTheme) -> AppTheme {
+        switch surface {
+        case .hard:
+            return AppTheme(
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.33, 0.51, 0.69), dark: AppColors.nsColor(0.08, 0.12, 0.16)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.11, 0.15, 0.19)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.08, 0.12, 0.16)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.09, 0.14, 0.18)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.33, 0.51, 0.69), dark: AppColors.nsColor(0.44, 0.58, 0.73)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.13, 0.20, 0.27), dark: AppColors.nsColor(0.85, 0.90, 0.95)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.86, 0.92), dark: AppColors.nsColor(0.09, 0.16, 0.22)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.52, 0.68, 0.81), dark: AppColors.nsColor(0.26, 0.42, 0.57)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.88, 0.93, 0.96), dark: AppColors.nsColor(0.14, 0.18, 0.22)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.84, 0.91, 0.96), dark: AppColors.nsColor(0.09, 0.17, 0.24)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.13, 0.30, 0.47), dark: AppColors.nsColor(0.57, 0.75, 0.91))
+            )
+        case .grass:
+            return AppTheme(
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.28, 0.62, 0.46), dark: AppColors.nsColor(0.08, 0.13, 0.12)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.11, 0.16, 0.14)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.08, 0.12, 0.10)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.09, 0.14, 0.12)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.18, 0.74, 0.51), dark: AppColors.nsColor(0.25, 0.80, 0.57)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.08, 0.52, 0.36), dark: AppColors.nsColor(0.46, 0.88, 0.68)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.92, 0.85), dark: AppColors.nsColor(0.08, 0.22, 0.17)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.46, 0.78, 0.65), dark: AppColors.nsColor(0.18, 0.56, 0.40)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.89, 0.95, 0.91), dark: AppColors.nsColor(0.14, 0.19, 0.17)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.82, 0.94, 0.88), dark: AppColors.nsColor(0.07, 0.23, 0.17)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.48, 0.34), dark: AppColors.nsColor(0.36, 0.88, 0.62))
+            )
+        case .clay:
+            return AppTheme(
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.31, 0.24), dark: AppColors.nsColor(0.16, 0.10, 0.08)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.17, 0.12, 0.10)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.13, 0.09, 0.08)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.15, 0.10, 0.09)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.85, 0.42, 0.28), dark: AppColors.nsColor(0.89, 0.54, 0.41)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.44, 0.20, 0.16), dark: AppColors.nsColor(0.99, 0.80, 0.72)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.84, 0.78), dark: AppColors.nsColor(0.23, 0.13, 0.10)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.86, 0.58, 0.47), dark: AppColors.nsColor(0.62, 0.31, 0.24)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.90, 0.86), dark: AppColors.nsColor(0.22, 0.16, 0.14)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 0.88, 0.83), dark: AppColors.nsColor(0.24, 0.14, 0.11)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.24, 0.16), dark: AppColors.nsColor(0.94, 0.60, 0.46))
+            )
+        }
+    }
 }
 
 extension DateFormatter {

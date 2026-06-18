@@ -3,7 +3,7 @@ import SwiftUI
 
 struct JSONTextEditor: NSViewRepresentable {
     @Binding var text: String
-    private static let baseTextColor = NSColor(calibratedRed: 0.13, green: 0.16, blue: 0.24, alpha: 1)
+    private static let baseTextColor = NSColor.labelColor
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text)
@@ -24,6 +24,7 @@ struct JSONTextEditor: NSViewRepresentable {
         textView.allowsUndo = true
         textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         textView.textColor = Self.baseTextColor
+        textView.insertionPointColor = Self.baseTextColor
         textView.backgroundColor = .clear
         textView.textContainerInset = NSSize(width: 10, height: 10)
         textView.textContainer?.widthTracksTextView = false
@@ -47,11 +48,16 @@ struct JSONTextEditor: NSViewRepresentable {
         }
 
         context.coordinator.parentText = $text
+        textView.textColor = Self.baseTextColor
+        textView.insertionPointColor = Self.baseTextColor
+
         if textView.string != text {
             context.coordinator.isUpdating = true
             textView.string = text
             context.coordinator.isUpdating = false
             context.coordinator.applyHighlighting(preserveSelection: false)
+        } else {
+            context.coordinator.applyHighlighting(preserveSelection: true)
         }
     }
 
@@ -95,11 +101,14 @@ struct JSONTextEditor: NSViewRepresentable {
                 return
             }
 
-            highlight(pattern: #""(?:\\.|[^"\\])*""#, color: NSColor.systemGreen, in: storage, text: string)
-            highlight(pattern: #""(?:\\.|[^"\\])*"\s*:"#, color: NSColor.systemRed, trimTrailingColon: true, in: storage, text: string)
-            highlight(pattern: #"(?<![\w.])-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b"#, color: NSColor.systemOrange, in: storage, text: string)
-            highlight(pattern: #"\b(?:true|false|null)\b"#, color: NSColor.systemPurple, in: storage, text: string)
-            let punctuationColor = NSColor(calibratedRed: 0.40, green: 0.43, blue: 0.48, alpha: 1)
+            highlight(pattern: #""(?:\\.|[^"\\])*""#, color: surfaceColor(role: .value), in: storage, text: string)
+            highlight(pattern: #""(?:\\.|[^"\\])*"\s*:"#, color: surfaceColor(role: .key), trimTrailingColon: true, in: storage, text: string)
+            highlight(pattern: #"(?<![\w.])-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b"#, color: syntaxColor(light: NSColor.systemOrange, dark: NSColor(calibratedRed: 1.00, green: 0.63, blue: 0.26, alpha: 1)), in: storage, text: string)
+            highlight(pattern: #"\b(?:true|false|null)\b"#, color: syntaxColor(light: NSColor.systemPurple, dark: NSColor(calibratedRed: 0.78, green: 0.62, blue: 1.00, alpha: 1)), in: storage, text: string)
+            let punctuationColor = syntaxColor(
+                light: NSColor(calibratedRed: 0.40, green: 0.43, blue: 0.48, alpha: 1),
+                dark: NSColor(calibratedRed: 0.75, green: 0.79, blue: 0.77, alpha: 1)
+            )
             highlight(pattern: #"[{}\[\],:]"#, color: punctuationColor, in: storage, text: string)
 
             storage.endEditing()
@@ -144,6 +153,52 @@ struct JSONTextEditor: NSViewRepresentable {
                 }
 
                 storage.addAttribute(.foregroundColor, value: color, range: range)
+            }
+        }
+
+        private func syntaxColor(light: NSColor, dark: NSColor) -> NSColor {
+            NSColor(name: nil) { appearance in
+                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+            }
+        }
+
+        private enum SurfaceColorRole {
+            case key
+            case value
+        }
+
+        private func surfaceColor(role: SurfaceColorRole) -> NSColor {
+            let surface = SettingsStore.loadSurfaceTheme()
+
+            return NSColor(name: nil) { appearance in
+                let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
+                switch (surface, role, isDark) {
+                case (.hard, .key, false):
+                    return NSColor(calibratedRed: 0.13, green: 0.20, blue: 0.27, alpha: 1)
+                case (.hard, .key, true):
+                    return NSColor(calibratedRed: 0.85, green: 0.90, blue: 0.95, alpha: 1)
+                case (.hard, .value, false):
+                    return NSColor(calibratedRed: 0.18, green: 0.36, blue: 0.53, alpha: 1)
+                case (.hard, .value, true):
+                    return NSColor(calibratedRed: 0.57, green: 0.75, blue: 0.91, alpha: 1)
+                case (.grass, .key, false):
+                    return NSColor(calibratedRed: 0.08, green: 0.52, blue: 0.36, alpha: 1)
+                case (.grass, .key, true):
+                    return NSColor(calibratedRed: 0.46, green: 0.88, blue: 0.68, alpha: 1)
+                case (.grass, .value, false):
+                    return NSColor(calibratedRed: 0.02, green: 0.59, blue: 0.41, alpha: 1)
+                case (.grass, .value, true):
+                    return NSColor(calibratedRed: 0.36, green: 0.88, blue: 0.62, alpha: 1)
+                case (.clay, .key, false):
+                    return NSColor(calibratedRed: 0.44, green: 0.20, blue: 0.16, alpha: 1)
+                case (.clay, .key, true):
+                    return NSColor(calibratedRed: 0.99, green: 0.80, blue: 0.72, alpha: 1)
+                case (.clay, .value, false):
+                    return NSColor(calibratedRed: 0.70, green: 0.30, blue: 0.20, alpha: 1)
+                case (.clay, .value, true):
+                    return NSColor(calibratedRed: 0.94, green: 0.60, blue: 0.46, alpha: 1)
+                }
             }
         }
     }

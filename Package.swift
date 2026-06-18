@@ -3,14 +3,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "mqtt-desktop",
+    name: "broker-explorer",
     platforms: [
         .macOS(.v13)
     ],
     products: [
         .executable(
-            name: "MQTTDesktop",
-            targets: ["MQTTDesktop"]
+            name: "BrokerExplorer",
+            targets: ["BrokerExplorer"]
         )
     ],
     dependencies: [
@@ -19,7 +19,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "MQTTDesktop",
+            name: "BrokerExplorer",
             dependencies: [
                 .product(name: "MQTTNIO", package: "mqtt-nio"),
                 .product(name: "NIOCore", package: "swift-nio"),

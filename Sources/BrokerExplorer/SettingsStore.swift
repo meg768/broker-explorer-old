@@ -7,6 +7,7 @@ enum SettingsStore {
     private static let portKey = "broker.port"
     private static let searchTextKey = "ui.searchText"
     private static let topicPanelWidthKey = "ui.topicPanelWidth"
+    private static let surfaceThemeKey = "ui.surfaceTheme"
 
     static func loadConnection() -> BrokerConnection {
         BrokerConnection(
@@ -48,5 +49,20 @@ enum SettingsStore {
         }
 
         UserDefaults.standard.set(Double(topicPanelWidth), forKey: topicPanelWidthKey)
+    }
+
+    static func loadSurfaceTheme() -> AppSurfaceTheme {
+        guard
+            let rawValue = UserDefaults.standard.string(forKey: surfaceThemeKey),
+            let surface = AppSurfaceTheme(rawValue: rawValue)
+        else {
+            return .grass
+        }
+
+        return surface
+    }
+
+    static func save(surfaceTheme: AppSurfaceTheme) {
+        UserDefaults.standard.set(surfaceTheme.rawValue, forKey: surfaceThemeKey)
     }
 }
