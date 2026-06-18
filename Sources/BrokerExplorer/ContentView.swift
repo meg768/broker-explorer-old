@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var topicPanelWidth = SettingsStore.loadTopicPanelWidth()
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             ConnectionPanel(
                 connection: $store.connection,
                 isScanning: store.isScanning,
@@ -45,7 +45,7 @@ struct ContentView: View {
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
         .id("\(appearance.mode.rawValue)-\(appearance.surface.rawValue)")
-        .padding(12)
+        .padding(8)
         .frame(minWidth: 1100, minHeight: 660)
         .background(AppColors.pageBackground)
         .searchable(text: $searchText, placement: .toolbar, prompt: "Filter topics")
@@ -286,7 +286,7 @@ struct ExplorerSplitView: View {
     let onPublish: (String, String, Bool, Int) -> Void
     let onDeleteTree: (String) -> Void
 
-    private let dividerWidth: CGFloat = 14
+    private let dividerWidth: CGFloat = 10
     private let minTopicWidth: CGFloat = 420
     private let minPublishWidth: CGFloat = 320
     private let defaultPublishWidth: CGFloat = 360
@@ -972,45 +972,45 @@ struct AppTheme {
         switch surface {
         case .hard:
             return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.33, 0.51, 0.69), dark: AppColors.nsColor(0.08, 0.12, 0.16)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.11, 0.15, 0.19)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.08, 0.12, 0.16)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.09, 0.14, 0.18)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.33, 0.51, 0.69), dark: AppColors.nsColor(0.44, 0.58, 0.73)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.13, 0.20, 0.27), dark: AppColors.nsColor(0.85, 0.90, 0.95)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.86, 0.92), dark: AppColors.nsColor(0.09, 0.16, 0.22)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.52, 0.68, 0.81), dark: AppColors.nsColor(0.26, 0.42, 0.57)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.88, 0.93, 0.96), dark: AppColors.nsColor(0.14, 0.18, 0.22)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.84, 0.91, 0.96), dark: AppColors.nsColor(0.09, 0.17, 0.24)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.13, 0.30, 0.47), dark: AppColors.nsColor(0.57, 0.75, 0.91))
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.42, 0.58, 0.72), dark: AppColors.nsColor(0.02, 0.07, 0.14)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 1.00, 1.00), dark: AppColors.nsColor(0.07, 0.11, 0.17)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 1.00), dark: AppColors.nsColor(0.04, 0.08, 0.14)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 1.00), dark: AppColors.nsColor(0.05, 0.10, 0.16)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.08, 0.36, 0.62), dark: AppColors.nsColor(0.35, 0.58, 0.86)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.19, 0.36), dark: AppColors.nsColor(0.73, 0.86, 1.00)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.79, 0.88, 0.96), dark: AppColors.nsColor(0.05, 0.15, 0.25)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.42, 0.62, 0.82), dark: AppColors.nsColor(0.20, 0.42, 0.64)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.88, 0.93, 0.97), dark: AppColors.nsColor(0.10, 0.14, 0.20)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.83, 0.91, 0.98), dark: AppColors.nsColor(0.04, 0.14, 0.24)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.04, 0.27, 0.48), dark: AppColors.nsColor(0.54, 0.76, 1.00))
             )
         case .grass:
             return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.28, 0.62, 0.46), dark: AppColors.nsColor(0.08, 0.13, 0.12)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.11, 0.16, 0.14)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.08, 0.12, 0.10)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.09, 0.14, 0.12)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.18, 0.74, 0.51), dark: AppColors.nsColor(0.25, 0.80, 0.57)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.08, 0.52, 0.36), dark: AppColors.nsColor(0.46, 0.88, 0.68)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.92, 0.85), dark: AppColors.nsColor(0.08, 0.22, 0.17)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.46, 0.78, 0.65), dark: AppColors.nsColor(0.18, 0.56, 0.40)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.89, 0.95, 0.91), dark: AppColors.nsColor(0.14, 0.19, 0.17)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.82, 0.94, 0.88), dark: AppColors.nsColor(0.07, 0.23, 0.17)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.48, 0.34), dark: AppColors.nsColor(0.36, 0.88, 0.62))
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.38, 0.66, 0.50), dark: AppColors.nsColor(0.01, 0.12, 0.08)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 0.99), dark: AppColors.nsColor(0.07, 0.13, 0.10)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 0.99), dark: AppColors.nsColor(0.04, 0.10, 0.07)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 0.99), dark: AppColors.nsColor(0.05, 0.12, 0.09)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.54, 0.32), dark: AppColors.nsColor(0.24, 0.78, 0.52)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.01, 0.36, 0.22), dark: AppColors.nsColor(0.50, 0.92, 0.70)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.92, 0.84), dark: AppColors.nsColor(0.04, 0.20, 0.13)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.32, 0.70, 0.52), dark: AppColors.nsColor(0.14, 0.50, 0.32)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.89, 0.95, 0.91), dark: AppColors.nsColor(0.10, 0.17, 0.13)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.80, 0.94, 0.86), dark: AppColors.nsColor(0.03, 0.20, 0.13)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.01, 0.40, 0.25), dark: AppColors.nsColor(0.38, 0.90, 0.62))
             )
         case .clay:
             return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.31, 0.24), dark: AppColors.nsColor(0.16, 0.10, 0.08)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.17, 0.12, 0.10)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.13, 0.09, 0.08)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 1.00, 1.00), dark: AppColors.nsColor(0.15, 0.10, 0.09)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.85, 0.42, 0.28), dark: AppColors.nsColor(0.89, 0.54, 0.41)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.44, 0.20, 0.16), dark: AppColors.nsColor(0.99, 0.80, 0.72)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.84, 0.78), dark: AppColors.nsColor(0.23, 0.13, 0.10)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.86, 0.58, 0.47), dark: AppColors.nsColor(0.62, 0.31, 0.24)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.90, 0.86), dark: AppColors.nsColor(0.22, 0.16, 0.14)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 0.88, 0.83), dark: AppColors.nsColor(0.24, 0.14, 0.11)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.24, 0.16), dark: AppColors.nsColor(0.94, 0.60, 0.46))
+                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.76, 0.50, 0.40), dark: AppColors.nsColor(0.14, 0.06, 0.04)),
+                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 0.99, 0.98), dark: AppColors.nsColor(0.16, 0.09, 0.07)),
+                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 0.99, 0.98), dark: AppColors.nsColor(0.12, 0.07, 0.05)),
+                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1.00, 0.99, 0.98), dark: AppColors.nsColor(0.14, 0.08, 0.06)),
+                primary: AppColors.adaptive(light: AppColors.nsColor(0.72, 0.28, 0.16), dark: AppColors.nsColor(0.90, 0.48, 0.32)),
+                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.42, 0.16, 0.09), dark: AppColors.nsColor(1.00, 0.74, 0.62)),
+                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.82, 0.74), dark: AppColors.nsColor(0.22, 0.11, 0.08)),
+                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.46, 0.35), dark: AppColors.nsColor(0.60, 0.27, 0.19)),
+                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.89, 0.85), dark: AppColors.nsColor(0.21, 0.14, 0.12)),
+                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 0.86, 0.80), dark: AppColors.nsColor(0.23, 0.12, 0.09)),
+                previewText: AppColors.adaptive(light: AppColors.nsColor(0.52, 0.19, 0.10), dark: AppColors.nsColor(0.96, 0.56, 0.40))
             )
         }
     }
