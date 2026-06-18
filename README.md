@@ -97,6 +97,132 @@ You can also build and run the app from Xcode:
 3. Select **My Mac** as the run destination.
 4. Press **Run**.
 
+## Make Your Own Mac App
+
+Broker Explorer is also a useful starting point for making your own native macOS app with SwiftUI and Codex.
+
+You do not need an Apple Developer account to build and run your own local app. You only need Xcode, Git, and the source code.
+
+### 1. Make a Copy
+
+Fork this repository on GitHub, or clone it and push it to a new repository:
+
+```sh
+cd ~/Documents/GitHub
+git clone https://github.com/meg768/broker-explorer.git my-mac-app
+cd my-mac-app
+```
+
+Then build it once before changing anything:
+
+```sh
+Scripts/build-app.sh
+open dist
+```
+
+Starting from a working build makes every later change easier to understand.
+
+### 2. Rename the App
+
+The visible app name is defined in:
+
+```text
+Resources/Info.plist
+Scripts/build-app.sh
+README.md
+```
+
+The Swift Package target and executable name are defined in:
+
+```text
+Package.swift
+Sources/BrokerExplorer/
+```
+
+If you rename the app, update those together. For a small personal app, it is fine to keep the internal Swift target name until you are sure the new name is right.
+
+### 3. Change the UI
+
+Most of the interface lives in:
+
+```text
+Sources/BrokerExplorer/ContentView.swift
+```
+
+Useful places to start:
+
+- `ConnectionPanel` controls the top panel.
+- `TopicTreePanel` controls the left browser panel.
+- `PublishPanel` controls the right editor/publish panel.
+- `StatusBar` controls the bottom status strip.
+- `AppColors` and `AppTheme` control colors and themes.
+
+After each change, rebuild:
+
+```sh
+Scripts/build-app.sh
+open dist
+```
+
+### 4. Change the Data Model
+
+Core app state and MQTT behavior live in:
+
+```text
+Sources/BrokerExplorer/ExplorerStore.swift
+Sources/BrokerExplorer/MQTTService.swift
+Sources/BrokerExplorer/Models.swift
+Sources/BrokerExplorer/SettingsStore.swift
+```
+
+If you are making a different kind of app, this is where you replace the MQTT-specific logic with your own domain.
+
+### 5. Work with Codex
+
+A practical Codex workflow is:
+
+1. Describe one small change.
+2. Let Codex edit the code.
+3. Run `Scripts/build-app.sh`.
+4. Open `dist/Broker Explorer.app`.
+5. Try the app.
+6. Repeat.
+
+Good prompts are concrete:
+
+```text
+Make the left panel narrower, but keep the divider draggable.
+```
+
+```text
+Rename the app to Example Studio and update the app bundle name.
+```
+
+```text
+Add a light/dark theme toggle and remember the choice.
+```
+
+Keep changes small. Native apps are easiest to shape when you can see and test each step.
+
+### 6. Sharing Your App
+
+For personal use, building locally is the simplest path.
+
+For sharing with non-technical users, macOS may block downloaded apps that are not signed and notarized by Apple. A `.zip` or `.dmg` does not remove that requirement.
+
+The free path is:
+
+- share the source code
+- document how to build it locally
+- let users create their own app from the repo
+
+The polished distribution path is:
+
+- join the Apple Developer Program
+- sign the app
+- notarize it
+- distribute a signed `.dmg` or publish through the App Store
+
 ## Updating Later
 
 To get the latest version:
