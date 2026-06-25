@@ -83,6 +83,9 @@ struct ContentView: View {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
             autoConnectIfPossible()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            store.reconnectWhenActivated()
+        }
         .onChange(of: store.selectedTopic) { _ in
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
         }

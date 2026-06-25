@@ -14,6 +14,7 @@ final class ExplorerStore: ObservableObject {
     private let mqttService = MQTTService()
     private var scanCompletionTask: Task<Void, Never>?
     private var connectionGeneration = 0
+    private var shouldReconnectOnActivation = false
 
     var tree: TopicNode {
         TopicTreeBuilder.build(messages: messages)
@@ -31,6 +32,7 @@ final class ExplorerStore: ObservableObject {
         connectionGeneration += 1
         let generation = connectionGeneration
         scanCompletionTask?.cancel()
+        shouldReconnectOnActivation = false
         isConnected = false
         isScanning = true
         status = .pending("Reading broker...")
@@ -73,6 +75,7 @@ final class ExplorerStore: ObservableObject {
     func disconnect() {
         connectionGeneration += 1
         scanCompletionTask?.cancel()
+        shouldReconnectOnActivation = false
         isConnected = false
         isScanning = false
         clearSession()
@@ -88,6 +91,15 @@ final class ExplorerStore: ObservableObject {
     }
 
     func refresh() {
+        connect()
+    }
+
+    func reconnectWhenActivated() {
+        guard shouldReconnectOnActivation, !isConnected, !isScanning, connection.canAutoConnect else {
+            return
+        }
+
+        status = .pending("Reconnecting to \(connection.displayName)...")
         connect()
     }
 
@@ -239,6 +251,7 @@ final class ExplorerStore: ObservableObject {
 
         isConnected = false
         isScanning = false
+        shouldReconnectOnActivation = true
         status = .error(error ?? "Broker connection closed.")
     }
 }
