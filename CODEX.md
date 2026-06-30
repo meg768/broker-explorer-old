@@ -82,6 +82,13 @@ passed locally.
 
 Passwords are currently stored in plain UserDefaults, not Keychain.
 
+## Visual Design
+
+`Broker Explorer` and `/Users/magnus/Documents/GitHub/lan-scanner` are sister
+tools. Keep their `hard`, `grass`, and `clay` themes visually synchronized:
+same RGB palette, same 8px panel radius, same panel border treatment, and the
+same tennis-surface theme naming (`US Open`, `Wimbledon`, `Roland Garros`).
+
 ## Distribution Notes
 
 README intentionally teaches local build as the recommended path. Sharing unsigned prebuilt macOS apps with non-technical users hits the same Gatekeeper/notarization wall seen in `lan-scanner`.
