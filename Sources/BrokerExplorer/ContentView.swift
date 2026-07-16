@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var topicPanelWidth = SettingsStore.loadTopicPanelWidth()
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 0) {
             ConnectionPanel(
                 connection: $store.connection,
                 isScanning: store.isScanning,
@@ -41,11 +41,11 @@ struct ContentView: View {
                 onPublish: store.publish,
                 onDeleteTree: store.deleteTree
             )
+            .padding(8)
 
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
         .id("\(appearance.mode.rawValue)-\(appearance.surface.rawValue)")
-        .padding(8)
         .frame(minWidth: 1100, minHeight: 660)
         .background(AppColors.pageBackground)
         .searchable(text: $searchText, placement: .toolbar, prompt: "Filter topics")
@@ -150,6 +150,7 @@ struct ContentView: View {
 }
 
 struct ConnectionPanel: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var connection: BrokerConnection
     let isScanning: Bool
     @Binding var settingsOpen: Bool
@@ -235,8 +236,16 @@ struct ConnectionPanel: View {
             }
         }
         .padding(18)
-        .background(AppColors.panelBackground)
-        .panelChrome()
+        .background(headerBackground)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(AppColors.fieldBorder)
+                .frame(height: 1)
+        }
+    }
+
+    private var headerBackground: Color {
+        colorScheme == .light ? AppColors.panelBackground : AppColors.pageBackground
     }
 }
 
@@ -836,10 +845,14 @@ struct StatusBar: View {
                 .foregroundStyle(AppColors.badgeText)
         }
         .font(.system(size: 13, weight: .semibold))
-        .frame(height: 40)
-        .padding(.horizontal, 14)
+        .frame(minHeight: 44)
+        .padding(.horizontal, 16)
         .background(AppColors.panelBackground)
-        .panelChrome()
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(AppColors.fieldBorder)
+                .frame(height: 1)
+        }
     }
 
     private var statusTint: Color {
