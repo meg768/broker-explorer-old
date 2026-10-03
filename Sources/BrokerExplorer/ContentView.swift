@@ -462,18 +462,20 @@ struct PublishPanel: View {
         VStack(alignment: .leading) {
             HStack {
                 Text("Topic")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
 
                 Spacer()
 
-                Button("Publish") {
+                Button {
                     onPublish(topic, payload, retain, qos)
+                } label: {
+                    Label("Publish", systemImage: "paperplane")
                 }
                 .disabled(normalizeTopic(topic).isEmpty)
 
-                Button("Delete", role: .destructive) {
+                Button(role: .destructive) {
                     confirmDeleteTree()
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
                 .disabled(normalizeTopic(topic).isEmpty)
             }
@@ -482,31 +484,44 @@ struct PublishPanel: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
 
-            LabeledContent("Received Time") {
+            Text("Received Time")
+
+            GroupBox {
                 Text(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             HStack {
-                Button("QoS \(qos)") {
-                    qos = (qos + 1) % 3
-                }
-
-                Toggle("Retain", isOn: $retain)
-                    .toggleStyle(.checkbox)
+                Text("Message")
 
                 Spacer()
 
-                Button(canFormatJSON ? "JSON" : "Text") {
+                Button {
                     if canFormatJSON {
                         formatJSON()
                     }
+                } label: {
+                    Label(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft")
                 }
+
+                Button {
+                    qos = (qos + 1) % 3
+                } label: {
+                    Label("QoS \(qos)", systemImage: "slider.horizontal.3")
+                }
+
+                Toggle(isOn: $retain) {
+                    Label("Retain", systemImage: "pin")
+                }
+                .toggleStyle(.button)
             }
 
             JSONTextEditor(text: $payload)
                 .id(editorResetID)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AppColors.editorBackground)
+                .border(Color(nsColor: .separatorColor))
                 .accessibilityLabel("Message payload")
         }
         .padding()
