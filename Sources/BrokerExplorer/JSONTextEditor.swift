@@ -10,11 +10,11 @@ struct JSONTextEditor: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
+        let scrollView = RoundedEditorScrollView()
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.drawsBackground = false
-        scrollView.borderType = .bezelBorder
+        scrollView.borderType = .noBorder
         scrollView.focusRingType = .exterior
 
         let textView = NSTextView()
@@ -204,4 +204,17 @@ struct JSONTextEditor: NSViewRepresentable {
             }
         }
     }
+}
+
+// NSTextView remains the editor; only its enclosing field frame is rounded.
+// AppKit renders the focus ring from this mask using the system accent color.
+private final class RoundedEditorScrollView: NSScrollView {
+    private let fieldCornerRadius: CGFloat = 6
+
+    override var focusRingMaskBounds: NSRect { bounds }
+
+    override func drawFocusRingMask() {
+        NSBezierPath(roundedRect: bounds, xRadius: fieldCornerRadius, yRadius: fieldCornerRadius).fill()
+    }
+
 }

@@ -176,19 +176,13 @@ struct ConnectionSheet: View {
                 .font(.headline)
 
             Form {
-                LabeledContent("Broker URL") {
-                    ConnectionTextField(text: $connection.url, label: "Broker URL", placeholder: "mqtt://broker.example.com", onSubmit: connectIfPossible)
-                }
-                LabeledContent("Username") {
-                    ConnectionTextField(text: $connection.username, label: "Username", onSubmit: connectIfPossible)
-                }
-                LabeledContent("Password") {
-                    ConnectionTextField(text: $connection.password, label: "Password", isSecure: true, onSubmit: connectIfPossible)
-                }
-                LabeledContent("Port") {
-                    ConnectionTextField(text: $connection.port, label: "Port", placeholder: "1883", onSubmit: connectIfPossible)
-                }
+                TextField("Broker URL", text: $connection.url, prompt: Text("mqtt://broker.example.com"))
+                TextField("Username", text: $connection.username)
+                SecureField("Password", text: $connection.password)
+                TextField("Port", text: $connection.port, prompt: Text("1883"))
             }
+            .textFieldStyle(.roundedBorder)
+            .onSubmit(connectIfPossible)
 
             if status != .idle {
                 Label(status.text, systemImage: status.symbolName)
@@ -584,7 +578,12 @@ struct PublishPanel: View {
             JSONTextEditor(text: $payload)
                 .id(editorResetID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(AppColors.editorBackground)
+                .background(AppColors.editorBackground, in: RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color(nsColor: .separatorColor))
+                        .allowsHitTesting(false)
+                }
                 .accessibilityLabel("Message payload")
         }
         .padding()

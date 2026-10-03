@@ -14,8 +14,8 @@ struct TopicTextField: NSViewRepresentable {
         field.cell = VerticallyCenteredTextFieldCell(textCell: text)
         field.isEditable = true
         field.isSelectable = true
-        field.isBezeled = false
-        field.isBordered = true
+        field.isBezeled = true
+        field.bezelStyle = .roundedBezel
         field.drawsBackground = true
         field.placeholderString = "home/topic"
         field.focusRingType = .exterior
