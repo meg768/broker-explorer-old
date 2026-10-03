@@ -6,7 +6,8 @@ struct ContentView: View {
     @EnvironmentObject private var appearance: AppearanceSettings
     @StateObject private var store = ExplorerStore()
     @State private var searchText = ""
-    @State private var settingsOpen = SettingsStore.loadConnection().url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    @State private var settingsOpen = false
+    @State private var hasBrokerConfiguration = SettingsStore.hasBrokerConfiguration
     @State private var publishTopic = ""
     @State private var publishPayload = ""
     @State private var publishRetain = true
@@ -18,6 +19,8 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             ExplorerSplitView(
+                hasBrokerConfiguration: hasBrokerConfiguration,
+                onConfigureBroker: { settingsOpen = true },
                 root: store.tree,
                 selectedTopic: store.selectedTopic,
                 selectedMessage: store.selectedMessage,
@@ -105,6 +108,13 @@ struct ContentView: View {
         }
         .onChange(of: store.connection) { connection in
             SettingsStore.save(connection: connection)
+            hasBrokerConfiguration = SettingsStore.hasBrokerConfiguration
+        }
+        .onChange(of: store.isScanning) { isScanning in
+            // Connecting also saves the unchanged default values from the sheet.
+            if isScanning {
+                hasBrokerConfiguration = !store.connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }
         }
         .onChange(of: topicPanelWidth) { width in
             SettingsStore.save(topicPanelWidth: width)
@@ -200,6 +210,8 @@ struct ConnectionSheet: View {
 }
 
 struct ExplorerSplitView: View {
+    let hasBrokerConfiguration: Bool
+    let onConfigureBroker: () -> Void
     let root: TopicNode
     let selectedTopic: String
     let selectedMessage: MQTTMessage?
@@ -228,6 +240,8 @@ struct ExplorerSplitView: View {
 
             HStack(spacing: 0) {
                 TopicTreePanel(
+                    hasBrokerConfiguration: hasBrokerConfiguration,
+                    onConfigureBroker: onConfigureBroker,
                     root: root,
                     selectedTopic: selectedTopic,
                     expandedTopics: expandedTopics,
@@ -300,6 +314,8 @@ struct SplitDivider: View {
 }
 
 struct TopicTreePanel: View {
+    let hasBrokerConfiguration: Bool
+    let onConfigureBroker: () -> Void
     let root: TopicNode
     let selectedTopic: String
     let expandedTopics: Set<String>
@@ -321,24 +337,50 @@ struct TopicTreePanel: View {
             .padding([.horizontal, .top], 16)
             .padding(.bottom, 10)
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 1) {
-                    ForEach(filteredChildren) { node in
-                        TopicNodeRow(
-                            node: node,
-                            selectedTopic: selectedTopic,
-                            expandedTopics: expandedTopics,
-                            level: 0,
-                            onSelect: onSelect,
-                            onToggle: onToggle
-                        )
+            if !hasBrokerConfiguration {
+                brokerConfigurationEmptyState
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 1) {
+                        ForEach(filteredChildren) { node in
+                            TopicNodeRow(
+                                node: node,
+                                selectedTopic: selectedTopic,
+                                expandedTopics: expandedTopics,
+                                level: 0,
+                                onSelect: onSelect,
+                                onToggle: onToggle
+                            )
+                        }
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 10)
-                .padding(.bottom, 16)
             }
         }
         .background(AppColors.panelBackground)
+    }
+
+    @ViewBuilder
+    private var brokerConfigurationEmptyState: some View {
+        if #available(macOS 14.0, *) {
+            ContentUnavailableView {
+                Label("No Broker Configured", systemImage: "network")
+            } description: {
+                Text("Enter your MQTT broker details to get started.")
+            } actions: {
+                Button("Configure Broker…", action: onConfigureBroker)
+            }
+        } else {
+            VStack {
+                Label("No Broker Configured", systemImage: "network")
+                    .font(.headline)
+                Text("Enter your MQTT broker details to get started.")
+                    .foregroundStyle(.secondary)
+                Button("Configure Broker…", action: onConfigureBroker)
+            }
+        }
     }
 
     private var filteredChildren: [TopicNode] {

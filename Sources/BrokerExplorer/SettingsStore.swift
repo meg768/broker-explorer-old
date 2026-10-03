@@ -9,6 +9,11 @@ enum SettingsStore {
     private static let topicPanelWidthKey = "ui.topicPanelWidth"
     private static let surfaceThemeKey = "ui.surfaceTheme"
 
+    static var hasBrokerConfiguration: Bool {
+        guard let url = UserDefaults.standard.string(forKey: urlKey) else { return false }
+        return !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     static func loadConnection() -> BrokerConnection {
         BrokerConnection(
             url: UserDefaults.standard.string(forKey: urlKey) ?? "mqtt://localhost",

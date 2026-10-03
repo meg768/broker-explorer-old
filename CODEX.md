@@ -93,8 +93,9 @@ such as syntax highlighting and errors.
 The first presentation pass keeps the existing recursive MQTT tree and custom
 split container, their interactions, and the AppKit JSON editor unchanged.
 Connection configuration is presented in a SwiftUI sheet with live bindings,
-immediate persistence, Return-to-connect, and the existing automatic presentation
-and dismissal conditions. Connection actions remain in the native toolbar.
+immediate persistence, Return-to-connect, and dismissal on successful connection.
+When no broker URL has been saved, the topic pane offers Configure Broker…
+instead of automatically presenting the sheet. Connection actions remain in the native toolbar.
 Legacy F3 syntax-theme cycling and F6 appearance switching are retained for
 compatibility; the surrounding UI uses system colors regardless of surface theme.
 
