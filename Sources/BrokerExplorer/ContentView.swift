@@ -315,6 +315,7 @@ struct TopicTreePanel: View {
                 Spacer()
 
                 Text(root.children.isEmpty ? "0 topics" : "\(leafCount(in: root)) topics")
+                    .font(.title3)
                     .foregroundStyle(.secondary)
             }
             .padding([.horizontal, .top], 16)
@@ -399,20 +400,20 @@ struct TopicNodeRow: View {
                 .buttonStyle(.plain)
 
                 Text(node.name)
-                    .font(.body)
+                    .font(.title3)
                     .foregroundStyle(isSelected ? AppColors.heading : AppColors.topicName)
                     .lineLimit(1)
 
                 if let preview = node.message?.payloadPreview, !preview.isEmpty {
                     Text(preview)
-                        .font(.system(.caption, design: .monospaced))
+                        .font(.system(.callout, design: .monospaced))
                         .foregroundStyle(AppColors.previewText)
                         .lineLimit(1)
                 }
 
                 if let count = node.childCountLabel {
                     Text(count)
-                        .font(.caption)
+                        .font(.callout)
                         .foregroundStyle(AppColors.badgeText)
                         .lineLimit(1)
                 }
@@ -459,7 +460,7 @@ struct PublishPanel: View {
     let onDeleteTree: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Topic")
 
@@ -480,14 +481,19 @@ struct PublishPanel: View {
                 .disabled(normalizeTopic(topic).isEmpty)
             }
 
-            TextField("home/topic", text: $topic)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
+            TopicTextField(text: $topic)
+                .frame(maxWidth: .infinity)
 
-            Text(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if let message = selectedMessage {
+                    Text(message.receivedAt, format: .dateTime.locale(.autoupdatingCurrent))
+                } else {
+                    Text("-")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
             HStack {
                 Text("Message")
