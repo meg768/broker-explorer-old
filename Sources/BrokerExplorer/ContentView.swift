@@ -579,7 +579,6 @@ struct PublishPanel: View {
                 .id(editorResetID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AppColors.editorBackground)
-                .border(Color(nsColor: .separatorColor))
                 .accessibilityLabel("Message payload")
         }
         .padding()

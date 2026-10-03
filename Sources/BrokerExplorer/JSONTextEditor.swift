@@ -14,6 +14,8 @@ struct JSONTextEditor: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.drawsBackground = false
+        scrollView.borderType = .bezelBorder
+        scrollView.focusRingType = .exterior
 
         let textView = NSTextView()
         textView.delegate = context.coordinator
