@@ -6,6 +6,7 @@ final class ExplorerStore: ObservableObject {
     @Published var connection = SettingsStore.loadConnection()
     @Published var isConnected = false
     @Published var isScanning = false
+    @Published private(set) var connectionFailure: String?
     @Published var messages: [MQTTMessage] = []
     @Published var selectedTopic = ""
     @Published var expandedTopics: Set<String> = []
@@ -34,6 +35,7 @@ final class ExplorerStore: ObservableObject {
         scanCompletionTask?.cancel()
         shouldReconnectOnActivation = false
         isConnected = false
+        connectionFailure = nil
         isScanning = true
         status = .pending("Reading broker...")
         messages = []
@@ -67,12 +69,14 @@ final class ExplorerStore: ObservableObject {
 
                 isConnected = false
                 isScanning = false
+                connectionFailure = error.localizedDescription
                 status = .error(error.localizedDescription)
             }
         }
     }
 
     func disconnect() {
+        connectionFailure = nil
         connectionGeneration += 1
         scanCompletionTask?.cancel()
         shouldReconnectOnActivation = false

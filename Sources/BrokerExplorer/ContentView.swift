@@ -20,6 +20,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             ExplorerSplitView(
                 hasBrokerConfiguration: hasBrokerConfiguration,
+                connectionFailure: store.connectionFailure,
                 onConfigureBroker: { settingsOpen = true },
                 root: store.tree,
                 selectedTopic: store.selectedTopic,
@@ -211,6 +212,7 @@ struct ConnectionSheet: View {
 
 struct ExplorerSplitView: View {
     let hasBrokerConfiguration: Bool
+    let connectionFailure: String?
     let onConfigureBroker: () -> Void
     let root: TopicNode
     let selectedTopic: String
@@ -241,6 +243,7 @@ struct ExplorerSplitView: View {
             HStack(spacing: 0) {
                 TopicTreePanel(
                     hasBrokerConfiguration: hasBrokerConfiguration,
+                    connectionFailure: connectionFailure,
                     onConfigureBroker: onConfigureBroker,
                     root: root,
                     selectedTopic: selectedTopic,
@@ -315,6 +318,7 @@ struct SplitDivider: View {
 
 struct TopicTreePanel: View {
     let hasBrokerConfiguration: Bool
+    let connectionFailure: String?
     let onConfigureBroker: () -> Void
     let root: TopicNode
     let selectedTopic: String
@@ -337,7 +341,7 @@ struct TopicTreePanel: View {
             .padding([.horizontal, .top], 16)
             .padding(.bottom, 10)
 
-            if !hasBrokerConfiguration {
+            if !hasBrokerConfiguration || connectionFailure != nil {
                 brokerConfigurationEmptyState
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -362,21 +366,29 @@ struct TopicTreePanel: View {
         .background(AppColors.panelBackground)
     }
 
+    private var emptyStateTitle: String {
+        connectionFailure == nil ? "No Broker Configured" : "Connection Failed"
+    }
+
+    private var emptyStateDescription: String {
+        connectionFailure ?? "Enter your MQTT broker details to get started."
+    }
+
     @ViewBuilder
     private var brokerConfigurationEmptyState: some View {
         if #available(macOS 14.0, *) {
             ContentUnavailableView {
-                Label("No Broker Configured", systemImage: "network")
+                Label(emptyStateTitle, systemImage: "network")
             } description: {
-                Text("Enter your MQTT broker details to get started.")
+                Text(emptyStateDescription)
             } actions: {
                 Button("Configure Broker…", action: onConfigureBroker)
             }
         } else {
             VStack {
-                Label("No Broker Configured", systemImage: "network")
+                Label(emptyStateTitle, systemImage: "network")
                     .font(.headline)
-                Text("Enter your MQTT broker details to get started.")
+                Text(emptyStateDescription)
                     .foregroundStyle(.secondary)
                 Button("Configure Broker…", action: onConfigureBroker)
             }
