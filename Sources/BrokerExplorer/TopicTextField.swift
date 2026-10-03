@@ -58,9 +58,15 @@ struct TopicTextField: NSViewRepresentable {
 }
 
 private final class VerticallyCenteredTextFieldCell: NSTextFieldCell {
+    private var isConfiguringEditor = false
+
     override func drawingRect(forBounds rect: NSRect) -> NSRect {
+        // select/edit already receive the centered rectangle. AppKit asks for
+        // drawingRect again while installing its field editor; do not inset or
+        // center that rectangle a second time.
+        if isConfiguringEditor { return rect }
         var contentRect = super.drawingRect(forBounds: rect)
-        let textHeight = cellSize(forBounds: contentRect).height
+        let textHeight = ceil(NSLayoutManager().defaultLineHeight(for: font ?? .systemFont(ofSize: NSFont.systemFontSize)))
         if contentRect.height > textHeight {
             contentRect.origin.y += (contentRect.height - textHeight) / 2
             contentRect.size.height = textHeight
@@ -69,10 +75,16 @@ private final class VerticallyCenteredTextFieldCell: NSTextFieldCell {
     }
 
     override func select(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, start selStart: Int, length selLength: Int) {
-        super.select(withFrame: drawingRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
+        let textRect = drawingRect(forBounds: rect)
+        isConfiguringEditor = true
+        defer { isConfiguringEditor = false }
+        super.select(withFrame: textRect, in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
     }
 
     override func edit(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, event: NSEvent?) {
-        super.edit(withFrame: drawingRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, event: event)
+        let textRect = drawingRect(forBounds: rect)
+        isConfiguringEditor = true
+        defer { isConfiguringEditor = false }
+        super.edit(withFrame: textRect, in: controlView, editor: textObj, delegate: delegate, event: event)
     }
 }
