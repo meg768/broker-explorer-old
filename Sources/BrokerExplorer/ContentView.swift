@@ -483,7 +483,7 @@ struct PublishPanel: View {
 
             TopicTextField(text: $topic)
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(height: 36)
 
             Group {
                 if let message = selectedMessage {
