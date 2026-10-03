@@ -459,23 +459,21 @@ struct PublishPanel: View {
     let onDeleteTree: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading) {
             HStack {
-                FieldLabel("Topic")
+                Text("Topic")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 Spacer()
 
-                Button {
+                Button("Publish") {
                     onPublish(topic, payload, retain, qos)
-                } label: {
-                    Label("Publish", systemImage: "paperplane")
                 }
                 .disabled(normalizeTopic(topic).isEmpty)
 
-                Button {
+                Button("Delete", role: .destructive) {
                     confirmDeleteTree()
-                } label: {
-                    Label("Delete", systemImage: "trash")
                 }
                 .disabled(normalizeTopic(topic).isEmpty)
             }
@@ -490,36 +488,28 @@ struct PublishPanel: View {
             }
 
             HStack {
-                FieldLabel("Message")
+                Button("QoS \(qos)") {
+                    qos = (qos + 1) % 3
+                }
+
+                Toggle("Retain", isOn: $retain)
+                    .toggleStyle(.checkbox)
 
                 Spacer()
 
-                Button {
+                Button(canFormatJSON ? "JSON" : "Text") {
                     if canFormatJSON {
                         formatJSON()
                     }
-                } label: {
-                    Label(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft")
-                }
-
-                Button {
-                    qos = (qos + 1) % 3
-                } label: {
-                    Label("QoS \(qos)", systemImage: "slider.horizontal.3")
-                }
-
-                Button {
-                    retain.toggle()
-                } label: {
-                    Label("Retain", systemImage: retain ? "pin.fill" : "pin")
                 }
             }
 
             JSONTextEditor(text: $payload)
                 .id(editorResetID)
                 .background(AppColors.editorBackground)
+                .accessibilityLabel("Message payload")
         }
-        .padding(18)
+        .padding()
         .background(AppColors.panelBackground)
     }
 
