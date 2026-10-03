@@ -12,6 +12,11 @@ struct TopicTextField: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSTextField {
         let field = NSTextField(string: text)
+        field.cell = VerticallyCenteredTextFieldCell(textCell: text)
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBezeled = true
+        field.drawsBackground = true
         field.placeholderString = "home/topic"
         field.bezelStyle = .roundedBezel
         field.focusRingType = .none
@@ -49,5 +54,25 @@ struct TopicTextField: NSViewRepresentable {
             guard let field = notification.object as? NSTextField else { return }
             text.wrappedValue = field.stringValue
         }
+    }
+}
+
+private final class VerticallyCenteredTextFieldCell: NSTextFieldCell {
+    override func drawingRect(forBounds rect: NSRect) -> NSRect {
+        var contentRect = super.drawingRect(forBounds: rect)
+        let textHeight = cellSize(forBounds: contentRect).height
+        if contentRect.height > textHeight {
+            contentRect.origin.y += (contentRect.height - textHeight) / 2
+            contentRect.size.height = textHeight
+        }
+        return contentRect
+    }
+
+    override func select(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, start selStart: Int, length selLength: Int) {
+        super.select(withFrame: drawingRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
+    }
+
+    override func edit(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, event: NSEvent?) {
+        super.edit(withFrame: drawingRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, event: event)
     }
 }
