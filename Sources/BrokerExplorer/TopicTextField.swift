@@ -29,6 +29,15 @@ struct TopicTextField: NSViewRepresentable {
         }
     }
 
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSTextField, context: Context) -> CGSize? {
+        // Apply the proposed height to the native control itself, rather than
+        // letting its intrinsic height leave empty space inside SwiftUI's frame.
+        CGSize(
+            width: proposal.width ?? nsView.intrinsicContentSize.width,
+            height: proposal.height ?? nsView.intrinsicContentSize.height
+        )
+    }
+
     final class Coordinator: NSObject, NSTextFieldDelegate {
         var text: Binding<String>
 
