@@ -14,10 +14,10 @@ struct TopicTextField: NSViewRepresentable {
         field.cell = VerticallyCenteredTextFieldCell(textCell: text)
         field.isEditable = true
         field.isSelectable = true
-        field.isBezeled = true
+        field.isBezeled = false
+        field.isBordered = true
         field.drawsBackground = true
         field.placeholderString = "home/topic"
-        field.bezelStyle = .roundedBezel
         field.focusRingType = .exterior
         field.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         field.delegate = context.coordinator
