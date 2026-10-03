@@ -310,7 +310,7 @@ struct TopicTreePanel: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                FieldLabel("Topics")
+                Text("Topics")
 
                 Spacer()
 
@@ -384,7 +384,7 @@ struct TopicNodeRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
+            HStack(alignment: node.children.isEmpty ? .firstTextBaseline : .center, spacing: 6) {
                 Button {
                     onSelect(node.path)
                     if !node.children.isEmpty {
@@ -484,13 +484,10 @@ struct PublishPanel: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
 
-            Text("Received Time")
-
-            GroupBox {
-                Text(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            Text(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
                 Text("Message")
