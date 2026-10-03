@@ -85,7 +85,10 @@ Passwords are currently stored in plain UserDefaults, not Keychain.
 ## Visual Design
 
 Broker Explorer should prefer native macOS/SwiftUI presentation and system
-appearance. It no longer shares the tennis-derived visual palette or panel
+appearance. Topic, Message, and Connection inputs use straight system borders
+and native focus rings consistently. Connection fields use AppKit text controls
+inside the SwiftUI sheet, preserving live bindings and Return-to-connect.
+It no longer shares the tennis-derived visual palette or panel
 styling of `lan-scanner`. Delegate ordinary control chrome, typography, and
 light/dark appearance to the system; keep custom color only for semantic uses
 such as syntax highlighting and errors.
