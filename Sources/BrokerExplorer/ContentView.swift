@@ -17,13 +17,6 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ConnectionPanel(
-                connection: $store.connection,
-                isScanning: store.isScanning,
-                settingsOpen: $settingsOpen,
-                onConnect: store.connect
-            )
-
             ExplorerSplitView(
                 root: store.tree,
                 selectedTopic: store.selectedTopic,
@@ -41,20 +34,20 @@ struct ContentView: View {
                 onPublish: store.publish,
                 onDeleteTree: store.deleteTree
             )
-            .padding(8)
 
+            Divider()
             StatusBar(status: store.status, topicCount: store.topicCount)
         }
         .id("\(appearance.mode.rawValue)-\(appearance.surface.rawValue)")
         .frame(minWidth: 1100, minHeight: 660)
-        .background(AppColors.pageBackground)
+        .background(Color(nsColor: .windowBackgroundColor))
         .searchable(text: $searchText, placement: .toolbar, prompt: "Filter topics")
         .toolbar {
             ToolbarItemGroup {
                 Button {
                     settingsOpen.toggle()
                 } label: {
-                    Label("Settings", systemImage: "slider.horizontal.3")
+                    Label("Connection…", systemImage: "slider.horizontal.3")
                 }
 
                 Button {
@@ -78,6 +71,16 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+        .navigationTitle(store.connection.displayName)
+        .sheet(isPresented: $settingsOpen) {
+            ConnectionSheet(
+                connection: $store.connection,
+                isScanning: store.isScanning,
+                status: store.status,
+                onConnect: store.connect,
+                onClose: { settingsOpen = false }
+            )
         }
         .onAppear {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
@@ -149,135 +152,50 @@ struct ContentView: View {
     }
 }
 
-struct ConnectionPanel: View {
-    @Environment(\.colorScheme) private var colorScheme
+struct ConnectionSheet: View {
     @Binding var connection: BrokerConnection
     let isScanning: Bool
-    @Binding var settingsOpen: Bool
+    let status: ExplorerStatus
     let onConnect: () -> Void
+    let onClose: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
-                        BrokerLabel()
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Connection")
+                .font(.headline)
 
-                        Button {
-                            settingsOpen.toggle()
-                        } label: {
-                            PillLabel("Settings")
-                        }
-                        .buttonStyle(.plain)
+            Form {
+                TextField("Broker URL", text: $connection.url, prompt: Text("mqtt://broker.example.com"))
+                TextField("Username", text: $connection.username)
+                SecureField("Password", text: $connection.password)
+                TextField("Port", text: $connection.port, prompt: Text("1883"))
+            }
+            .textFieldStyle(.roundedBorder)
+            .onSubmit(connectIfPossible)
 
-                        if settingsOpen {
-                            Button {
-                                onConnect()
-                            } label: {
-                                PillLabel(isScanning ? "Reconnect" : "Connect")
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
-                    }
+            if status != .idle {
+                Label(status.text, systemImage: status.symbolName)
+                    .font(.callout)
+                    .foregroundStyle(status.tint)
+            }
 
-                    Text(connection.displayName)
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(AppColors.heading)
-                        .lineLimit(1)
-                }
-
+            HStack {
                 Spacer()
-
-                HStack(spacing: 8) {
-                    AppLogoIcon()
-                        .frame(width: 34, height: 34)
-                    HStack(alignment: .firstTextBaseline, spacing: 7) {
-                        Text("Broker")
-                            .font(.system(size: 23, weight: .bold))
-                        Text("Explorer")
-                            .font(.system(size: 23, weight: .bold))
-                    }
-                }
-                .foregroundStyle(AppColors.primaryStrong)
-            }
-
-            if settingsOpen {
-                Grid(alignment: .bottomLeading, horizontalSpacing: 12, verticalSpacing: 6) {
-                    GridRow {
-                        FieldLabel("Broker URL")
-                        FieldLabel("Username")
-                        FieldLabel("Password")
-                        FieldLabel("Port")
-                    }
-
-                    GridRow {
-                        TextField("mqtt://broker.example.com", text: $connection.url)
-                            .settingsTextField()
-
-                        TextField("", text: $connection.username)
-                            .settingsTextField()
-
-                        SecureField("", text: $connection.password)
-                            .settingsTextField()
-
-                        TextField("1883", text: $connection.port)
-                            .settingsTextField()
-                            .frame(width: 84)
-                    }
-                }
-                .onSubmit {
-                    guard !connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                        return
-                    }
-
-                    onConnect()
-                }
+                Button("Close", action: onClose)
+                    .keyboardShortcut(.cancelAction)
+                Button(isScanning ? "Reconnect" : "Connect", action: connectIfPossible)
+                    .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
-        .padding(18)
-        .background(headerBackground)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(AppColors.fieldBorder)
-                .frame(height: 1)
+        .padding(24)
+        .frame(width: 440)
+    }
+
+    private func connectIfPossible() {
+        guard !connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return
         }
-    }
-
-    private var headerBackground: Color {
-        colorScheme == .light ? AppColors.panelBackground : AppColors.pageBackground
-    }
-}
-
-struct AppLogoIcon: View {
-    private var icon: NSImage {
-        let image = (NSImage(named: "BrokerExplorerIcon") ?? NSApplication.shared.applicationIconImage).copy() as? NSImage
-        image?.isTemplate = true
-        return image ?? NSApplication.shared.applicationIconImage
-    }
-
-    var body: some View {
-        Image(nsImage: icon)
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(AppColors.primaryStrong)
-    }
-}
-
-private extension View {
-    func settingsTextField() -> some View {
-        self
-            .textFieldStyle(.plain)
-            .foregroundStyle(AppColors.heading)
-            .font(.system(size: 13, weight: .medium))
-            .padding(.horizontal, 10)
-            .frame(height: 34)
-            .background(AppColors.inputBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(AppColors.fieldBorder)
-            }
+        onConnect()
     }
 }
 
@@ -365,9 +283,10 @@ struct SplitDivider: View {
             Rectangle()
                 .fill(Color.clear)
 
-            Capsule()
-                .fill(AppColors.fieldBorder)
-                .frame(width: 4)
+            HStack(spacing: 0) {
+                Divider()
+            }
+            .frame(maxHeight: .infinity)
         }
         .contentShape(Rectangle())
         .onHover { isHovering in
@@ -395,7 +314,8 @@ struct TopicTreePanel: View {
 
                 Spacer()
 
-                PillLabel(root.children.isEmpty ? "0 topics" : "\(leafCount(in: root)) topics", isActive: false)
+                Text(root.children.isEmpty ? "0 topics" : "\(leafCount(in: root)) topics")
+                    .foregroundStyle(.secondary)
             }
             .padding([.horizontal, .top], 16)
             .padding(.bottom, 10)
@@ -418,7 +338,6 @@ struct TopicTreePanel: View {
             }
         }
         .background(AppColors.panelBackground)
-        .panelChrome()
     }
 
     private var filteredChildren: [TopicNode] {
@@ -480,30 +399,22 @@ struct TopicNodeRow: View {
                 .buttonStyle(.plain)
 
                 Text(node.name)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .font(.body)
                     .foregroundStyle(isSelected ? AppColors.heading : AppColors.topicName)
                     .lineLimit(1)
 
                 if let preview = node.message?.payloadPreview, !preview.isEmpty {
                     Text(preview)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(AppColors.previewText)
                         .lineLimit(1)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(AppColors.previewBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
 
                 if let count = node.childCountLabel {
                     Text(count)
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .font(.caption)
                         .foregroundStyle(AppColors.badgeText)
                         .lineLimit(1)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(AppColors.neutralBadgeBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
 
                 Spacer(minLength: 0)
@@ -513,7 +424,6 @@ struct TopicNodeRow: View {
             .padding(.horizontal, 6)
             .frame(height: 28)
             .background(isSelected ? AppColors.selectionBackground : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
             .onTapGesture {
                 onSelect(node.path)
                 if !node.children.isEmpty {
@@ -558,35 +468,26 @@ struct PublishPanel: View {
                 Button {
                     onPublish(topic, payload, retain, qos)
                 } label: {
-                    IconPillLabel("Publish", systemImage: "paperplane")
+                    Label("Publish", systemImage: "paperplane")
                 }
-                .buttonStyle(.plain)
                 .disabled(normalizeTopic(topic).isEmpty)
 
                 Button {
                     confirmDeleteTree()
                 } label: {
-                    IconPillLabel("Delete", systemImage: "trash")
+                    Label("Delete", systemImage: "trash")
                 }
-                .buttonStyle(.plain)
                 .disabled(normalizeTopic(topic).isEmpty)
             }
 
             TextField("home/topic", text: $topic)
-                .textFieldStyle(.plain)
+                .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
-                .foregroundStyle(AppColors.heading)
-                .padding(.horizontal, 12)
-                .frame(height: 42)
-                .background(AppColors.inputBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(AppColors.fieldBorder)
-                }
 
-            FieldLabel("Received Time")
-            ReadOnlyField(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
+            LabeledContent("Received Time") {
+                Text(selectedMessage.map { DateFormatter.explorer.string(from: $0.receivedAt) } ?? "-")
+                    .foregroundStyle(.secondary)
+            }
 
             HStack {
                 FieldLabel("Message")
@@ -598,37 +499,28 @@ struct PublishPanel: View {
                         formatJSON()
                     }
                 } label: {
-                    IconPillLabel(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft")
+                    Label(canFormatJSON ? "JSON" : "Text", systemImage: canFormatJSON ? "curlybraces" : "text.alignleft")
                 }
-                .buttonStyle(.plain)
 
                 Button {
                     qos = (qos + 1) % 3
                 } label: {
-                    IconPillLabel("QoS \(qos)", systemImage: "slider.horizontal.3")
+                    Label("QoS \(qos)", systemImage: "slider.horizontal.3")
                 }
-                .buttonStyle(.plain)
 
                 Button {
                     retain.toggle()
                 } label: {
-                    IconPillLabel("Retain", systemImage: "pin", isActive: retain)
+                    Label("Retain", systemImage: retain ? "pin.fill" : "pin")
                 }
-                .buttonStyle(.plain)
             }
 
             JSONTextEditor(text: $payload)
                 .id(editorResetID)
                 .background(AppColors.editorBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(AppColors.fieldBorder)
-                }
         }
         .padding(18)
         .background(AppColors.panelBackground)
-        .panelChrome()
     }
 
     private var canFormatJSON: Bool {
@@ -674,153 +566,6 @@ struct PublishPanel: View {
     }
 }
 
-struct PillLabel: View {
-    let text: String
-    var isActive = true
-    var isDanger = false
-
-    init(_ text: String, isActive: Bool = true, isDanger: Bool = false) {
-        self.text = text
-        self.isActive = isActive
-        self.isDanger = isDanger
-    }
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 13, weight: .bold))
-            .lineLimit(1)
-            .padding(.horizontal, 12)
-            .frame(height: 24)
-            .foregroundStyle(foreground)
-            .background(background)
-            .clipShape(Capsule())
-            .overlay {
-                Capsule()
-                    .stroke(border, lineWidth: 1)
-            }
-            .contentShape(Capsule())
-    }
-
-    private var foreground: Color {
-        if isDanger {
-            return AppColors.danger
-        }
-
-        return isActive ? AppColors.primaryStrong : AppColors.badgeText
-    }
-
-    private var background: Color {
-        if isDanger {
-            return AppColors.dangerBackground
-        }
-
-        return isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground
-    }
-
-    private var border: Color {
-        if isDanger {
-            return AppColors.danger.opacity(0.75)
-        }
-
-        return isActive ? AppColors.primary.opacity(0.65) : AppColors.fieldBorder
-    }
-}
-
-struct IconPillLabel: View {
-    let text: String
-    let systemImage: String
-    var isActive = true
-    var isDanger = false
-
-    init(_ text: String, systemImage: String, isActive: Bool = true, isDanger: Bool = false) {
-        self.text = text
-        self.systemImage = systemImage
-        self.isActive = isActive
-        self.isDanger = isDanger
-    }
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .bold))
-
-            Text(text)
-                .font(.system(size: 13, weight: .bold))
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 24)
-        .foregroundStyle(foreground)
-        .background(background)
-        .clipShape(Capsule())
-        .overlay {
-            Capsule()
-                .stroke(border, lineWidth: 1)
-        }
-        .contentShape(Capsule())
-    }
-
-    private var foreground: Color {
-        if isDanger {
-            return AppColors.danger
-        }
-
-        return isActive ? AppColors.primaryStrong : AppColors.badgeText
-    }
-
-    private var background: Color {
-        if isDanger {
-            return AppColors.dangerBackground
-        }
-
-        return isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground
-    }
-
-    private var border: Color {
-        if isDanger {
-            return AppColors.danger.opacity(0.75)
-        }
-
-        return isActive ? AppColors.primary.opacity(0.65) : AppColors.fieldBorder
-    }
-}
-
-struct FilterField: View {
-    @Binding var text: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(AppColors.badgeText)
-
-            TextField("Filter topics", text: $text)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(AppColors.heading)
-
-            if !text.isEmpty {
-                Button {
-                    text = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(AppColors.badgeText)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 9)
-        .frame(height: 26)
-        .background(AppColors.inputBackground)
-        .clipShape(Capsule())
-        .overlay {
-            Capsule()
-                .stroke(AppColors.fieldBorder)
-        }
-    }
-}
-
 struct StatusBar: View {
     let status: ExplorerStatus
     let topicCount: Int
@@ -844,15 +589,10 @@ struct StatusBar: View {
             Text(topicCount == 1 ? "1 topic" : "\(topicCount) topics")
                 .foregroundStyle(AppColors.badgeText)
         }
-        .font(.system(size: 13, weight: .semibold))
-        .frame(minHeight: 44)
+        .font(.callout)
+        .padding(.vertical, 6)
         .padding(.horizontal, 16)
         .background(AppColors.panelBackground)
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(AppColors.fieldBorder)
-                .frame(height: 1)
-        }
     }
 
     private var statusTint: Color {
@@ -876,176 +616,25 @@ struct FieldLabel: View {
 
     var body: some View {
         Text(text)
-            .font(.caption)
-            .fontWeight(.bold)
-            .foregroundStyle(AppColors.caption)
-            .textCase(.uppercase)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
     }
 }
 
-extension View {
-    func panelChrome() -> some View {
-        self
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.panelBorder, lineWidth: 1)
-            }
-    }
-}
-
-struct BrokerLabel: View {
-    var body: some View {
-        Text("Broker")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(AppColors.caption)
-            .textCase(.uppercase)
-    }
-}
-
-struct ReadOnlyField: View {
-    let text: String
-
-    init(_ text: String) {
-        self.text = text
-    }
-
-    var body: some View {
-        Text(text)
-            .lineLimit(1)
-            .foregroundStyle(AppColors.heading)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 10)
-            .frame(height: 32)
-            .background(AppColors.readOnlyBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(AppColors.readOnlyBorder)
-            }
-    }
-}
-
-struct ConnectionBadge: View {
-    let text: String
-    let isActive: Bool
-
-    var body: some View {
-        Text(text)
-            .font(.caption)
-            .fontWeight(.bold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .foregroundStyle(isActive ? AppColors.primaryStrong : AppColors.badgeText)
-            .background(isActive ? AppColors.badgeBackground : AppColors.neutralBadgeBackground)
-            .clipShape(Capsule())
-    }
-}
-
+// Semantic colors for the existing custom tree. Selection remains custom until
+// the separately scoped outline migration; no tennis palette is used here.
 enum AppColors {
-    private static var theme: AppTheme {
-        AppTheme.surface(SettingsStore.loadSurfaceTheme())
-    }
-
-    static var pageBackground: Color { theme.pageBackground }
-    static var windowBackground: Color { pageBackground }
-    static var panelBackground: Color { theme.panelBackground }
-    static var panelBorder: Color { theme.panelBorder }
-    static var editorBackground: Color { theme.editorBackground }
-    static var inputBackground: Color { theme.inputBackground }
-    static var fieldBorder: Color { theme.softBorder }
-    static let caption = adaptive(light: nsColor(0.44, 0.46, 0.49), dark: nsColor(0.66, 0.71, 0.69))
-    static let heading = adaptive(light: nsColor(0.13, 0.16, 0.24), dark: nsColor(0.93, 0.96, 0.94))
-    static let topicName = adaptive(light: nsColor(0.36, 0.38, 0.42), dark: nsColor(0.80, 0.84, 0.82))
-    static let treeDisclosure = adaptive(light: nsColor(0.54, 0.58, 0.64), dark: nsColor(0.61, 0.68, 0.65))
-    static let treeMuted = adaptive(light: nsColor(0.76, 0.80, 0.86), dark: nsColor(0.40, 0.46, 0.43))
-    static let badgeText = adaptive(light: nsColor(0.35, 0.38, 0.46), dark: nsColor(0.72, 0.78, 0.75))
-    static var primary: Color { theme.primary }
-    static var primaryStrong: Color { theme.primaryStrong }
-    static var badgeBackground: Color { theme.softBackground }
-    static var neutralBadgeBackground: Color { theme.neutralBackground }
-    static var previewBackground: Color { theme.previewBackground }
-    static var previewText: Color { theme.previewText }
-    static let danger = adaptive(light: nsColor(0.86, 0.20, 0.18), dark: nsColor(1.00, 0.38, 0.34))
-    static let dangerBackground = danger.opacity(0.10)
-    static var selectionBackground: Color { theme.softBackground }
-    static var readOnlyBackground: Color { theme.previewBackground }
-    static var readOnlyBorder: Color { theme.softBorder }
-
-    static func adaptive(light: NSColor, dark: NSColor) -> Color {
-        Color(nsColor: NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
-        })
-    }
-
-    static func nsColor(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) -> NSColor {
-        NSColor(calibratedRed: red, green: green, blue: blue, alpha: 1)
-    }
-}
-
-struct AppTheme {
-    let pageBackground: Color
-    let panelBackground: Color
-    let panelBorder: Color
-    let editorBackground: Color
-    let inputBackground: Color
-    let primary: Color
-    let primaryStrong: Color
-    let softBackground: Color
-    let softBorder: Color
-    let neutralBackground: Color
-    let previewBackground: Color
-    let previewText: Color
-
-    static func surface(_ surface: AppSurfaceTheme) -> AppTheme {
-        switch surface {
-        case .hard:
-            return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.42, 0.58, 0.72), dark: AppColors.nsColor(0.02, 0.07, 0.14)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 1.00, 1.00), dark: AppColors.nsColor(0.07, 0.11, 0.17)),
-                panelBorder: AppColors.adaptive(light: AppColors.nsColor(0.83, 0.91, 0.98), dark: AppColors.nsColor(0.13, 0.24, 0.35)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 1.00), dark: AppColors.nsColor(0.04, 0.08, 0.14)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(0.99, 1.00, 1.00), dark: AppColors.nsColor(0.05, 0.10, 0.16)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.08, 0.36, 0.62), dark: AppColors.nsColor(0.35, 0.58, 0.86)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.19, 0.36), dark: AppColors.nsColor(0.73, 0.86, 1.00)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.79, 0.88, 0.96), dark: AppColors.nsColor(0.05, 0.15, 0.25)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.42, 0.62, 0.82), dark: AppColors.nsColor(0.20, 0.42, 0.64)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.88, 0.93, 0.97), dark: AppColors.nsColor(0.10, 0.14, 0.20)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.83, 0.91, 0.98), dark: AppColors.nsColor(0.04, 0.14, 0.24)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.04, 0.27, 0.48), dark: AppColors.nsColor(0.54, 0.76, 1.00))
-            )
-        case .grass:
-            return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.28, 0.62, 0.46), dark: AppColors.nsColor(0.08, 0.13, 0.12)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.11, 0.16, 0.14)),
-                panelBorder: AppColors.adaptive(light: AppColors.nsColor(0.82, 0.93, 0.87), dark: AppColors.nsColor(0.15, 0.28, 0.22)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.09, 0.14, 0.12)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.09, 0.14, 0.12)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.18, 0.74, 0.51), dark: AppColors.nsColor(0.25, 0.80, 0.57)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.08, 0.52, 0.36), dark: AppColors.nsColor(0.46, 0.88, 0.68)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.78, 0.92, 0.85), dark: AppColors.nsColor(0.08, 0.22, 0.17)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.46, 0.78, 0.65), dark: AppColors.nsColor(0.18, 0.56, 0.40)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.89, 0.95, 0.91), dark: AppColors.nsColor(0.14, 0.19, 0.17)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.82, 0.94, 0.88), dark: AppColors.nsColor(0.07, 0.23, 0.17)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.02, 0.48, 0.34), dark: AppColors.nsColor(0.36, 0.88, 0.62))
-            )
-        case .clay:
-            return AppTheme(
-                pageBackground: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.31, 0.24), dark: AppColors.nsColor(0.16, 0.10, 0.08)),
-                panelBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.17, 0.12, 0.10)),
-                panelBorder: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.84, 0.78), dark: AppColors.nsColor(0.28, 0.18, 0.15)),
-                editorBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.15, 0.10, 0.09)),
-                inputBackground: AppColors.adaptive(light: AppColors.nsColor(1, 1, 1), dark: AppColors.nsColor(0.15, 0.10, 0.09)),
-                primary: AppColors.adaptive(light: AppColors.nsColor(0.85, 0.42, 0.28), dark: AppColors.nsColor(0.89, 0.54, 0.41)),
-                primaryStrong: AppColors.adaptive(light: AppColors.nsColor(0.44, 0.20, 0.16), dark: AppColors.nsColor(0.99, 0.80, 0.72)),
-                softBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.84, 0.78), dark: AppColors.nsColor(0.23, 0.13, 0.10)),
-                softBorder: AppColors.adaptive(light: AppColors.nsColor(0.86, 0.58, 0.47), dark: AppColors.nsColor(0.62, 0.31, 0.24)),
-                neutralBackground: AppColors.adaptive(light: AppColors.nsColor(0.96, 0.90, 0.86), dark: AppColors.nsColor(0.22, 0.16, 0.14)),
-                previewBackground: AppColors.adaptive(light: AppColors.nsColor(0.98, 0.88, 0.83), dark: AppColors.nsColor(0.24, 0.14, 0.11)),
-                previewText: AppColors.adaptive(light: AppColors.nsColor(0.58, 0.24, 0.16), dark: AppColors.nsColor(0.94, 0.60, 0.46))
-            )
-        }
-    }
+    static let panelBackground = Color(nsColor: .windowBackgroundColor)
+    static let editorBackground = Color(nsColor: .textBackgroundColor)
+    static let heading = Color.primary
+    static let topicName = Color.primary
+    static let treeDisclosure = Color.secondary
+    static let treeMuted = Color.secondary
+    static let badgeText = Color.secondary
+    static let previewText = Color.secondary
+    static let selectionBackground = Color(nsColor: .unemphasizedSelectedContentBackgroundColor)
+    static let primaryStrong = Color.secondary
+    static let danger = Color.red
 }
 
 extension DateFormatter {

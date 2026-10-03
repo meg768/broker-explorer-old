@@ -84,10 +84,19 @@ Passwords are currently stored in plain UserDefaults, not Keychain.
 
 ## Visual Design
 
-`Broker Explorer` and `/Users/magnus/Documents/GitHub/lan-scanner` are sister
-tools. Keep their `hard`, `grass`, and `clay` themes visually synchronized:
-same RGB palette, same 8px panel radius, same panel border treatment, and the
-same tennis-surface theme naming (`US Open`, `Wimbledon`, `Roland Garros`).
+Broker Explorer should prefer native macOS/SwiftUI presentation and system
+appearance. It no longer shares the tennis-derived visual palette or panel
+styling of `lan-scanner`. Delegate ordinary control chrome, typography, and
+light/dark appearance to the system; keep custom color only for semantic uses
+such as syntax highlighting and errors.
+
+The first presentation pass keeps the existing recursive MQTT tree and custom
+split container, their interactions, and the AppKit JSON editor unchanged.
+Connection configuration is presented in a SwiftUI sheet with live bindings,
+immediate persistence, Return-to-connect, and the existing automatic presentation
+and dismissal conditions. Connection actions remain in the native toolbar.
+Legacy F3 syntax-theme cycling and F6 appearance switching are retained for
+compatibility; the surrounding UI uses system colors regardless of surface theme.
 
 ## Distribution Notes
 
