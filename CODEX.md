@@ -34,7 +34,17 @@ Scripts/build-app.sh debug
 with UTC `YYYYMMDDHHMMSS` using PlistBuddy; the release version stays in the source
 Info.plist and is not changed by builds.
 
-As of 2026-06-30, there is no DMG build script and no signing/notarization flow in this repo.
+Mac App Store build: `Scripts/build-app.sh app-store` (release, current host
+architecture). Requires valid signing identities with private keys for team
+`52A6FA9VB5`: `3rd Party Mac Developer Application: Magnus Egelberg (52A6FA9VB5)`
+and `3rd Party Mac Developer Installer: Magnus Egelberg (52A6FA9VB5)` (Mac
+Installer Distribution). The script signs and verifies the sandboxed app, then
+creates and verifies `dist/Broker Explorer.pkg`. If the installer identity is
+missing, it leaves the verified app and exits with an error before packaging.
+Normal debug/release builds remain unsigned development bundles. All builds
+include the app and SwiftPM dependency privacy resources. No provisioning
+profile is needed for these two unrestricted sandbox entitlements; TestFlight
+would separately require a distribution profile.
 
 Verification run on 2026-06-30:
 
