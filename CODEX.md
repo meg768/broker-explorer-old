@@ -30,7 +30,9 @@ Scripts/build-app.sh
 Scripts/build-app.sh debug
 ```
 
-`Scripts/build-app.sh` builds the Swift package, assembles a Finder-launchable `.app` under `dist/`, copies `Resources/Info.plist`, copies `Resources/BrokerExplorerIcon.icns`, and marks the executable as runnable.
+`Scripts/build-app.sh` builds the Swift package, assembles a Finder-launchable `.app` under `dist/`, copies `Resources/Info.plist`, copies `Resources/BrokerExplorerIcon.icns`, and marks the executable as runnable. It stamps the built bundle’s `CFBundleVersion`
+with UTC `YYYYMMDDHHMMSS` using PlistBuddy; the release version stays in the source
+Info.plist and is not changed by builds.
 
 As of 2026-06-30, there is no DMG build script and no signing/notarization flow in this repo.
 
@@ -77,7 +79,8 @@ Recents are updated after MQTT login succeeds, independently of subscription suc
 Identity is the trimmed URL, port, and username; password changes replace the entry.
 
 The app has one window, no tabs, and one optional logical open connection. It
-launches without an open connection. Connection → New Connection… edits a fresh
+automatically opens the first recent connection at launch, or stays closed if
+there are no recents. Explicit Close remains closed for the current session. Connection → New Connection… edits a fresh
 in-memory draft; Cancel leaves the current broker untouched. Open Recent connects
 directly. Close Connection clears the session without deleting recents.
 Unexpected network loss preserves the logical connection and existing reconnect

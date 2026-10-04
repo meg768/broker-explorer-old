@@ -40,7 +40,7 @@ final class ConnectionTests: XCTestCase {
         XCTFail("Timed out waiting for broker state")
     }
 
-    func testRecentsAreBoundedUpdatedAndPersistedWithoutAutoOpening() async throws {
+    func testRecentsAreBoundedUpdatedAndPersistedWithAutoOpening() async throws {
         for index in 0..<6 {
             store.connect(to: connection(index))
             try await waitFor { self.store.isConnected && self.store.messages.first?.topic == "broker/\(index)" }
@@ -56,9 +56,31 @@ final class ConnectionTests: XCTestCase {
         XCTAssertTrue(store.messages.isEmpty)
         XCTAssertEqual(store.recentConnections.count, 5)
         let relaunched = ExplorerStore()
-        XCTAssertNil(relaunched.openConnection)
-        XCTAssertFalse(relaunched.isConnected)
+        XCTAssertEqual(relaunched.openConnection, connection(3, password: "test-only-updated-password"))
+        try await waitFor { relaunched.isConnected }
         XCTAssertEqual(relaunched.recentConnections.count, 5)
+        relaunched.disconnect()
+    }
+
+    func testLaunchWithoutRecentsStaysClosed() {
+        XCTAssertNil(store.openConnection)
+        XCTAssertFalse(store.isConnected)
+        XCTAssertTrue(store.recentConnections.isEmpty)
+    }
+
+    func testOneRecentOpensAndRelaunchAfterCloseOpensAgain() async throws {
+        SettingsStore.save(recentConnections: [connection(0)])
+        store = ExplorerStore()
+        try await waitFor { self.store.isConnected }
+        XCTAssertEqual(store.openConnection, connection(0))
+        store.disconnect()
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertNil(store.openConnection)
+        XCTAssertEqual(store.recentConnections, [connection(0)])
+        XCTAssertEqual(SettingsStore.loadRecentConnections(), [connection(0)])
+        store = ExplorerStore()
+        try await waitFor { self.store.isConnected }
+        XCTAssertEqual(store.openConnection, connection(0))
     }
 
     func testDraftCancelDoesNotAffectOpenConnection() async throws {

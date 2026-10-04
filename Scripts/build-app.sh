@@ -29,6 +29,9 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
 cp "${BUILD_DIR}/${EXECUTABLE_NAME}" "${MACOS_DIR}/${EXECUTABLE_NAME}"
 cp "${ROOT_DIR}/Resources/Info.plist" "${CONTENTS_DIR}/Info.plist"
+# Stamp the actual bundle, leaving the release version and source plist unchanged.
+BUILD_NUMBER="$(TZ=UTC date '+%Y%m%d%H%M%S')"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" "${CONTENTS_DIR}/Info.plist"
 cp "${ROOT_DIR}/Resources/BrokerExplorerIcon.icns" "${RESOURCES_DIR}/BrokerExplorerIcon.icns"
 chmod +x "${MACOS_DIR}/${EXECUTABLE_NAME}"
 

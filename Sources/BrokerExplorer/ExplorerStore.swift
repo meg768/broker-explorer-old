@@ -22,6 +22,12 @@ final class ExplorerStore: ObservableObject {
     private var connectionTask: Task<Void, Never>?
     private var shouldReconnectOnActivation = false
 
+    init() {
+        if let mostRecent = recentConnections.first {
+            connect(to: mostRecent)
+        }
+    }
+
     var tree: TopicNode {
         TopicTreeBuilder.build(messages: messages)
     }
