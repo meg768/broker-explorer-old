@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>BrokerExplorer</string>
 	<key>CFBundleIdentifier</key>
-	<string>se.meg768.broker-explorer</string>
+	<string>se.egelberg.broker-explorer</string>
 	<key>CFBundleIconFile</key>
 	<string>BrokerExplorerIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
