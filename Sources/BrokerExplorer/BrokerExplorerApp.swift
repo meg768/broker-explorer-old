@@ -17,6 +17,14 @@ struct BrokerExplorerApp: App {
         .windowStyle(.titleBar)
         .commands {
             CommandGroup(replacing: .newItem) { }
+            CommandGroup(replacing: .help) {
+                Button("Broker Explorer Help") {
+                    let alert = NSAlert()
+                    alert.messageText = "Broker Explorer Help is a work in progress."
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+            }
             CommandMenu("Connection") {
                 Button("New Connection…", action: store.newConnection)
                     .keyboardShortcut("n")
@@ -36,6 +44,8 @@ struct BrokerExplorerApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var menuObserver: NSObjectProtocol?
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
     }
@@ -43,20 +53,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        menuObserver = NotificationCenter.default.addObserver(
+            forName: NSMenu.didAddItemNotification, object: nil, queue: .main
+        ) { notification in
+            guard let menu = notification.object as? NSMenu, menu === NSApp.mainMenu else { return }
+            DispatchQueue.main.async { self.configureMenuBar() }
+        }
         DispatchQueue.main.async {
-            // This app has connections, not documents or additional windows.
-            if let menu = NSApp.mainMenu {
-                if let file = menu.items.first(where: { $0.title == "File" }) {
-                    menu.removeItem(file)
-                }
-                if let connection = menu.items.first(where: { $0.title == "Connection" }) {
-                    menu.removeItem(connection)
-                    menu.insertItem(connection, at: 1)
-                }
-                self.removeTabCommands(from: menu)
-            }
+            self.configureMenuBar()
             for window in NSApp.windows { window.tabbingMode = .disallowed }
         }
+    }
+
+    private func configureMenuBar() {
+        guard let menu = NSApp.mainMenu else { return }
+        for item in menu.items where ["File", "View", "Window"].contains(item.title) {
+            menu.removeItem(item)
+        }
+        if let connection = menu.items.first(where: { $0.title == "Connection" }),
+           menu.index(of: connection) != 1 {
+            menu.removeItem(connection)
+            menu.insertItem(connection, at: 1)
+        }
+        removeTabCommands(from: menu)
     }
 
     private func removeTabCommands(from menu: NSMenu) {

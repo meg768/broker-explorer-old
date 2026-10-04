@@ -448,6 +448,13 @@ struct TopicNodeRow: View {
                         .foregroundStyle(node.children.isEmpty ? AppColors.treeMuted : AppColors.treeDisclosure)
                 }
                 .buttonStyle(.plain)
+                .alignmentGuide(.firstTextBaseline) { dimensions in
+                    // The name uses title3; align the dot's center to its glyphs,
+                    // without moving the shared name/payload baseline.
+                    node.children.isEmpty
+                        ? dimensions[VerticalAlignment.center] + NSFont.preferredFont(forTextStyle: .title3).capHeight / 2
+                        : dimensions[.firstTextBaseline]
+                }
 
                 Text(node.name)
                     .font(.title3)
