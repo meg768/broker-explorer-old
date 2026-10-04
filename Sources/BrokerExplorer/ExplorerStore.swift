@@ -3,7 +3,11 @@ import SwiftUI
 
 @MainActor
 final class ExplorerStore: ObservableObject {
-    @Published var connection = SettingsStore.loadConnection()
+    @Published private(set) var openConnection: BrokerConnection?
+    @Published private(set) var recentConnections = SettingsStore.loadRecentConnections()
+    @Published var connectionDraft = BrokerConnection()
+    @Published var connectionSheetOpen = false
+    var connection: BrokerConnection { openConnection ?? BrokerConnection() }
     @Published var isConnected = false
     @Published var isScanning = false
     @Published private(set) var connectionFailure: String?
@@ -15,6 +19,7 @@ final class ExplorerStore: ObservableObject {
     private let mqttService = MQTTService()
     private var scanCompletionTask: Task<Void, Never>?
     private var connectionGeneration = 0
+    private var connectionTask: Task<Void, Never>?
     private var shouldReconnectOnActivation = false
 
     var tree: TopicNode {
@@ -29,7 +34,23 @@ final class ExplorerStore: ObservableObject {
         messages.count
     }
 
+    func newConnection() {
+        connectionDraft = BrokerConnection()
+        connectionSheetOpen = true
+    }
+
+    func connectDraft() {
+        connect(to: connectionDraft)
+    }
+
     func connect() {
+        guard let openConnection else { return }
+        connect(to: openConnection)
+    }
+
+    func connect(to connection: BrokerConnection) {
+        openConnection = connection
+        connectionSheetOpen = false
         connectionGeneration += 1
         let generation = connectionGeneration
         scanCompletionTask?.cancel()
@@ -42,12 +63,20 @@ final class ExplorerStore: ObservableObject {
         selectedTopic = ""
         expandedTopics = []
 
-        Task {
+        // Await the predecessor even when cancelled: the MQTT operation may still
+        // be suspended, and its cleanup must finish before another client opens.
+        let previousTask = connectionTask
+        previousTask?.cancel()
+        connectionTask = Task {
+            await previousTask?.value
+            guard generation == connectionGeneration, !Task.isCancelled else { return }
             do {
-                SettingsStore.save(connection: connection)
                 let brokerName = connection.displayName
                 try await mqttService.connect(
                     connection: connection,
+                    onConnected: { [weak self] in
+                        await self?.remember(connection, generation: generation)
+                    },
                     onMessage: { [weak self] message in
                         await self?.receive(message, generation: generation)
                     },
@@ -63,6 +92,7 @@ final class ExplorerStore: ObservableObject {
                 status = .pending("Reading retained topics from \(brokerName)...")
                 scheduleScanCompletion()
             } catch {
+                try? await mqttService.disconnect()
                 guard generation == connectionGeneration else {
                     return
                 }
@@ -76,6 +106,8 @@ final class ExplorerStore: ObservableObject {
     }
 
     func disconnect() {
+        openConnection = nil
+        connectionSheetOpen = false
         connectionFailure = nil
         connectionGeneration += 1
         scanCompletionTask?.cancel()
@@ -85,13 +117,26 @@ final class ExplorerStore: ObservableObject {
         clearSession()
         status = .idle
 
-        Task {
+        let generation = connectionGeneration
+        let previousTask = connectionTask
+        previousTask?.cancel()
+        connectionTask = Task {
+            await previousTask?.value
             do {
                 try await mqttService.disconnect()
             } catch {
+                guard generation == connectionGeneration else { return }
                 status = .error(error.localizedDescription)
             }
         }
+    }
+
+    private func remember(_ connection: BrokerConnection, generation: Int) {
+        guard generation == connectionGeneration else { return }
+        recentConnections.removeAll { $0.isSameRecentConnection(as: connection) }
+        recentConnections.insert(connection, at: 0)
+        recentConnections = Array(recentConnections.prefix(5))
+        SettingsStore.save(recentConnections: recentConnections)
     }
 
     func refresh() {
@@ -99,7 +144,7 @@ final class ExplorerStore: ObservableObject {
     }
 
     func reconnectWhenActivated() {
-        guard shouldReconnectOnActivation, !isConnected, !isScanning, connection.canAutoConnect else {
+        guard openConnection != nil, shouldReconnectOnActivation, !isConnected, !isScanning, connection.canAutoConnect else {
             return
         }
 
@@ -135,11 +180,15 @@ final class ExplorerStore: ObservableObject {
         selectedTopic = normalized
         expandedTopics.formUnion(ancestorTopics(for: normalized))
 
+        let generation = connectionGeneration
         Task {
+            guard generation == connectionGeneration else { return }
             do {
                 try await mqttService.publish(topic: normalized, payload: payload, retain: retain, qos: qos)
+                guard generation == connectionGeneration else { return }
                 publishLocally(topic: normalized, payload: payload, retain: retain, qos: qos)
             } catch {
+                guard generation == connectionGeneration else { return }
                 status = .error(error.localizedDescription)
             }
         }
@@ -162,16 +211,21 @@ final class ExplorerStore: ObservableObject {
             return
         }
 
+        let generation = connectionGeneration
         Task {
+            guard generation == connectionGeneration else { return }
             do {
                 for topic in topics {
+                    guard generation == connectionGeneration else { return }
                     try await mqttService.publish(topic: topic, payload: "", retain: true, qos: 1)
                 }
 
+                guard generation == connectionGeneration else { return }
                 messages.removeAll { topics.contains($0.topic) }
                 selectedTopic = messages.first?.topic ?? ""
                 status = .success("Deleted \(topics.count) retained \(topics.count == 1 ? "topic" : "topics") under \(normalized).")
             } catch {
+                guard generation == connectionGeneration else { return }
                 status = .error(error.localizedDescription)
             }
         }

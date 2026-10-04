@@ -9,6 +9,7 @@ actor MQTTService {
 
     func connect(
         connection: BrokerConnection,
+        onConnected: @escaping @Sendable () async -> Void,
         onMessage: @escaping @Sendable (MQTTMessage) async -> Void,
         onClose: @escaping @Sendable (String?) async -> Void
     ) async throws {
@@ -41,6 +42,9 @@ actor MQTTService {
         }
 
         try await client.connect()
+        try Task.checkCancellation()
+        await onConnected()
+        try Task.checkCancellation()
 
         let listener = client.createPublishListener()
         listenerTask = Task {

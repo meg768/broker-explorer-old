@@ -4,40 +4,42 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var appearance: AppearanceSettings
-    @StateObject private var store = ExplorerStore()
+    @EnvironmentObject private var store: ExplorerStore
     @State private var searchText = ""
-    @State private var settingsOpen = false
-    @State private var hasBrokerConfiguration = SettingsStore.hasBrokerConfiguration
     @State private var publishTopic = ""
     @State private var publishPayload = ""
     @State private var publishRetain = true
     @State private var publishQoS = 1
     @State private var editorResetID = UUID()
-    @State private var didAutoConnect = false
     @State private var topicPanelWidth = SettingsStore.loadTopicPanelWidth()
 
     var body: some View {
         VStack(spacing: 0) {
-            ExplorerSplitView(
-                hasBrokerConfiguration: hasBrokerConfiguration,
-                connectionFailure: store.connectionFailure,
-                onConfigureBroker: { settingsOpen = true },
-                root: store.tree,
-                selectedTopic: store.selectedTopic,
-                selectedMessage: store.selectedMessage,
-                expandedTopics: store.expandedTopics,
-                searchText: $searchText,
-                topicPanelWidth: $topicPanelWidth,
-                publishTopic: $publishTopic,
-                publishPayload: $publishPayload,
-                publishRetain: $publishRetain,
-                publishQoS: $publishQoS,
-                editorResetID: editorResetID,
-                onSelect: store.selectTopic,
-                onToggle: store.toggleTopic,
-                onPublish: store.publish,
-                onDeleteTree: store.deleteTree
-            )
+            if store.openConnection == nil {
+                noConnectionState
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ExplorerSplitView(
+                    hasBrokerConfiguration: true,
+                    connectionFailure: store.connectionFailure,
+                    onConfigureBroker: store.newConnection,
+                    root: store.tree,
+                    selectedTopic: store.selectedTopic,
+                    selectedMessage: store.selectedMessage,
+                    expandedTopics: store.expandedTopics,
+                    searchText: $searchText,
+                    topicPanelWidth: $topicPanelWidth,
+                    publishTopic: $publishTopic,
+                    publishPayload: $publishPayload,
+                    publishRetain: $publishRetain,
+                    publishQoS: $publishQoS,
+                    editorResetID: editorResetID,
+                    onSelect: store.selectTopic,
+                    onToggle: store.toggleTopic,
+                    onPublish: store.publish,
+                    onDeleteTree: store.deleteTree
+                )
+            }
 
             Divider()
             StatusBar(status: store.status, topicCount: store.topicCount)
@@ -49,9 +51,9 @@ struct ContentView: View {
         .toolbar {
             ToolbarItemGroup {
                 Button {
-                    settingsOpen.toggle()
+                    store.newConnection()
                 } label: {
-                    Label("Connection…", systemImage: "slider.horizontal.3")
+                    Label("New Connection…", systemImage: "slider.horizontal.3")
                 }
 
                 Button {
@@ -65,30 +67,29 @@ struct ContentView: View {
                     Button {
                         store.disconnect()
                     } label: {
-                        Label("Disconnect", systemImage: "bolt.slash")
+                        Label("Close Connection", systemImage: "bolt.slash")
                     }
                 } else {
                     Button {
-                        store.connect()
+                        store.openConnection == nil ? store.newConnection() : store.connect()
                     } label: {
                         Label("Connect", systemImage: "bolt.horizontal")
                     }
                 }
             }
         }
-        .navigationTitle(store.connection.displayName)
-        .sheet(isPresented: $settingsOpen) {
+        .navigationTitle(store.openConnection?.displayName ?? "Broker Explorer")
+        .sheet(isPresented: $store.connectionSheetOpen) {
             ConnectionSheet(
-                connection: $store.connection,
+                connection: $store.connectionDraft,
                 isScanning: store.isScanning,
                 status: store.status,
-                onConnect: store.connect,
-                onClose: { settingsOpen = false }
+                onConnect: store.connectDraft,
+                onClose: { store.connectionSheetOpen = false }
             )
         }
         .onAppear {
             hydratePublishPanel(from: store.selectedMessage, topic: store.selectedTopic)
-            autoConnectIfPossible()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             store.reconnectWhenActivated()
@@ -99,23 +100,8 @@ struct ContentView: View {
         .onChange(of: store.selectedMessage) { message in
             hydratePublishPanel(from: message, topic: store.selectedTopic)
         }
-        .onChange(of: store.isConnected) { isConnected in
-            if isConnected {
-                settingsOpen = false
-            } else if store.topicCount == 0, store.selectedTopic.isEmpty {
-                settingsOpen = true
-                clearPublishPanel()
-            }
-        }
-        .onChange(of: store.connection) { connection in
-            SettingsStore.save(connection: connection)
-            hasBrokerConfiguration = SettingsStore.hasBrokerConfiguration
-        }
-        .onChange(of: store.isScanning) { isScanning in
-            // Connecting also saves the unchanged default values from the sheet.
-            if isScanning {
-                hasBrokerConfiguration = !store.connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            }
+        .onChange(of: store.openConnection) { connection in
+            if connection == nil { clearPublishPanel() }
         }
         .onChange(of: topicPanelWidth) { width in
             SettingsStore.save(topicPanelWidth: width)
@@ -152,15 +138,25 @@ struct ContentView: View {
         editorResetID = UUID()
     }
 
-    private func autoConnectIfPossible() {
-        guard !didAutoConnect, store.connection.canAutoConnect else {
-            return
+    @ViewBuilder
+    private var noConnectionState: some View {
+        if #available(macOS 14.0, *) {
+            ContentUnavailableView {
+                Label("No Connection Open", systemImage: "network")
+            } description: {
+                Text("Create a new connection or choose Connection → Open Recent.")
+            } actions: {
+                Button("New Connection…", action: store.newConnection)
+            }
+        } else {
+            VStack {
+                Label("No Connection Open", systemImage: "network").font(.headline)
+                Text("Create a new connection or choose Connection → Open Recent.").foregroundStyle(.secondary)
+                Button("New Connection…", action: store.newConnection)
+            }
         }
-
-        didAutoConnect = true
-        settingsOpen = false
-        store.connect()
     }
+
 }
 
 struct ConnectionSheet: View {
@@ -192,9 +188,9 @@ struct ConnectionSheet: View {
 
             HStack {
                 Spacer()
-                Button("Close", action: onClose)
+                Button("Cancel", action: onClose)
                     .keyboardShortcut(.cancelAction)
-                Button(isScanning ? "Reconnect" : "Connect", action: connectIfPossible)
+                Button("Connect", action: connectIfPossible)
                     .disabled(connection.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

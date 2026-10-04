@@ -70,17 +70,19 @@ passed locally.
 
 ## Persistence
 
-`SettingsStore` persists the following in `UserDefaults`:
+`SettingsStore` stores at most five recent `BrokerConnection` values as Codable
+JSON data in UserDefaults, plus UI search text, topic panel width, and surface theme.
+Passwords remain in UserDefaults; no Keychain or legacy connection migration.
+Recents are updated after MQTT login succeeds, independently of subscription success.
+Identity is the trimmed URL, port, and username; password changes replace the entry.
 
-- broker URL
-- username
-- password
-- port
-- UI search text
-- topic panel width
-- surface theme
-
-Passwords are currently stored in plain UserDefaults, not Keychain.
+The app has one window, no tabs, and one optional logical open connection. It
+launches without an open connection. Connection → New Connection… edits a fresh
+in-memory draft; Cancel leaves the current broker untouched. Open Recent connects
+directly. Close Connection clears the session without deleting recents.
+Unexpected network loss preserves the logical connection and existing reconnect
+behavior. Connect/close operations are serialized and old callbacks are rejected
+using the connection generation.
 
 ## Visual Design
 
@@ -97,11 +99,10 @@ such as syntax highlighting and errors.
 The first presentation pass keeps the existing recursive MQTT tree and custom
 split container, their interactions, and the AppKit JSON editor unchanged.
 Connection configuration is presented in a SwiftUI sheet with live bindings,
-immediate persistence, Return-to-connect, and dismissal on successful connection.
-When no broker URL has been saved, the topic pane offers Configure Broker…
-instead of automatically presenting the sheet. Failed connection attempts show
-a Connection Failed empty state with the same action; unrelated operation errors
-do not trigger it. Connection actions remain in the native toolbar.
+an in-memory draft and Return-to-connect. Connect dismisses the sheet and opens
+the requested broker. No connection open shows a native empty state with New
+Connection… and directions to Open Recent. Failed connection attempts show
+a Connection Failed state; unrelated operation errors do not trigger it. Connection actions remain in the native toolbar.
 Legacy F3 syntax-theme cycling and F6 appearance switching are retained for
 compatibility; the surrounding UI uses system colors regardless of surface theme.
 

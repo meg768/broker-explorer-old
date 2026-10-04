@@ -1,10 +1,21 @@
 import Foundation
 
-struct BrokerConnection: Equatable {
+struct BrokerConnection: Equatable, Codable {
     var url: String = "mqtt://localhost"
     var username: String = ""
     var password: String = ""
     var port: String = "1883"
+
+    func isSameRecentConnection(as other: BrokerConnection) -> Bool {
+        url.trimmingCharacters(in: .whitespacesAndNewlines) == other.url.trimmingCharacters(in: .whitespacesAndNewlines)
+            && port.trimmingCharacters(in: .whitespacesAndNewlines) == other.port.trimmingCharacters(in: .whitespacesAndNewlines)
+            && username.trimmingCharacters(in: .whitespacesAndNewlines) == other.username.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var recentLabel: String {
+        let account = username.isEmpty ? "" : " — \(username)"
+        return "\(url):\(port)\(account)"
+    }
 
     var displayName: String {
         guard !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

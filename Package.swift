@@ -25,6 +25,7 @@ let package = Package(
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio")
             ]
-        )
+        ),
+        .testTarget(name: "BrokerExplorerTests", dependencies: ["BrokerExplorer"], exclude: ["broker_fixture.py"])
     ]
 )
